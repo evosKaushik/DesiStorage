@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-import { ThemeToggle } from "../ThemeToggle";
+import { ThemeToggler } from "../ThemeToggle";
 import Image from "next/image";
 
 const LINKS = [
@@ -68,7 +68,9 @@ export function SiteNav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
+          <ThemeToggler className="bg-transparent border-0"/>
+
+
           <Button variant="ghost" size="sm" className="text-sm">
             <Link href="/login">Sign in</Link>
           </Button>
