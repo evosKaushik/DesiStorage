@@ -187,6 +187,10 @@
     );
 }
 
+@utility input-error-state {
+  @apply border-destructive/90! ring-6! ring-destructive/15! focus-visible:ring-destructive/20!;
+}
+
 @keyframes float-slow {
   0%,
   100% {
