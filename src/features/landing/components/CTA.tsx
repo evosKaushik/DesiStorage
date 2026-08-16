@@ -29,7 +29,7 @@ export function CTA() {
               variant="outline"
               className="h-12 border-primary-foreground/30 bg-transparent px-6 text-base text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
             >
-              Book a demo
+              Try Free Trail
             </Button>
           </div>
         </div>

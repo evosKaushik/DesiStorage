@@ -99,7 +99,7 @@ const RegisterPage = () => {
                 <Input
                   id="name"
                   autoComplete="name"
-                  placeholder="Arjun Mehta"
+                  placeholder="Babu Dakar"
                   {...register("fullName")}
                   className={`h-11 rounded-xl pl-9  ${errors.fullName && "input-error-state"}`}
                 />
@@ -119,7 +119,7 @@ const RegisterPage = () => {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="you@company.in"
+                  placeholder="babudakar@gmail.com"
                   {...register("email")}
                   className={`h-11 rounded-xl pl-9  ${errors.email && "input-error-state"}`}
                 />

@@ -86,7 +86,7 @@ const LoginPage = () => {
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="you@company.in"
+                placeholder="babudakar@gmail.com"
                 {...register("email")}
                 className={`h-11 rounded-xl pl-9 ${errors.email && "input-error-state"}`}
               />

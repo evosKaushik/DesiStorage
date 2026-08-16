@@ -31,7 +31,7 @@ function peekNextThemeBg(): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ThemeToggler({
+export default function ThemeToggler({
   direction = "vertical",
   duration = 550,
   defaultTheme = "light",
@@ -86,12 +86,15 @@ export function ThemeToggler({
       });
     }, duration);
 
-    setTimeout(() => {
-      curtain.style.transition = "none";
-      curtain.style.transform = scale0;
-      curtain.style.transformOrigin = originIn;
-      animatingRef.current = false;
-    }, duration * 2 + 100);
+    setTimeout(
+      () => {
+        curtain.style.transition = "none";
+        curtain.style.transform = scale0;
+        curtain.style.transformOrigin = originIn;
+        animatingRef.current = false;
+      },
+      duration * 2 + 100,
+    );
   };
 
   const isDark = themeRef.current === "dark";
@@ -104,9 +107,13 @@ export function ThemeToggler({
             ref={curtainRef}
             aria-hidden="true"
             className="fixed inset-0 pointer-events-none"
-            style={{ transform: scale0, transformOrigin: originIn, zIndex: 99999 }}
+            style={{
+              transform: scale0,
+              transformOrigin: originIn,
+              zIndex: 99999,
+            }}
           />,
-          document.body
+          document.body,
         )}
 
       <button
@@ -114,7 +121,7 @@ export function ThemeToggler({
         onClick={toggle}
         className={cn(
           "w-9 h-9 bg-muted text-muted-foreground border border-border flex items-center justify-center rounded-full cursor-pointer outline-none hover:bg-muted/50 transition-colors",
-          className
+          className,
         )}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       >

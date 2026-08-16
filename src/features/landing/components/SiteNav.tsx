@@ -1,14 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { Cloud, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-import { ThemeToggler } from "../ThemeToggle";
+// import { ThemeToggler } from "../../../components/ThemeToggle";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 
+const ThemeToggler = dynamic(() => import("../../../components/ThemeToggle"), {
+  ssr: false,
+});
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -68,10 +72,9 @@ export function SiteNav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggler className="bg-transparent border-0"/>
+          <ThemeToggler className="bg-transparent border-0" />
 
-
-          <Button variant="ghost" size="sm" className="text-sm">
+          <Button variant="outline" size="sm" className="text-sm">
             <Link href="/login">Sign in</Link>
           </Button>
           <Button size="sm" className="text-sm shadow-sm">
