@@ -1,11 +1,14 @@
 import { app } from "./app.js";
-import { env } from "./config/env.js";
+import { ENV } from "./config/env.js";
+import { redisClient } from "./config/redis.js";
 
 async function start() {
   try {
+    await redisClient.connect();
+
     await app.listen({
-      port: env.PORT,
-      host: env.HOST,
+      port: ENV.PORT,
+      host: ENV.HOST,
     });
   } catch (err) {
     app.log.error(err);

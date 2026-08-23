@@ -1,0 +1,6 @@
+{"level":30,"time":1787339871907,"pid":11800,"hostname":"DESKTOP-JIPA1HO","msg":"MongoDB connected"}
+{"level":30,"time":1787339872086,"pid":11800,"hostname":"DESKTOP-JIPA1HO","msg":"Server listening at http://[::1]:5000"}
+{"level":30,"time":1787339872090,"pid":11800,"hostname":"DESKTOP-JIPA1HO","msg":"Server listening at http://127.0.0.1:5000"}
+{"level":30,"time":1787339958539,"pid":8228,"hostname":"DESKTOP-JIPA1HO","msg":"MongoDB connected"}
+{"level":30,"time":1787339958594,"pid":8228,"hostname":"DESKTOP-JIPA1HO","msg":"Server listening at http://[::1]:5000"}
+{"level":30,"time":1787339958597,"pid":8228,"hostname":"DESKTOP-JIPA1HO","msg":"Server listening at http://127.0.0.1:5000"}
