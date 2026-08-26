@@ -1,3 +1,5 @@
+"use client";
+
 import { Bell, FileText, UserPlus, Share2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

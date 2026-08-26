@@ -23,8 +23,45 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import useUserStore, { selectUser } from "@/store/useUserStore";
+import { logoutUserApi } from "@/features/auth/api";
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export function ProfileMenu() {
+  const user = useUserStore(selectUser);
+  const logout = useUserStore((s) => s.logout);
+  const router = useRouter();
+
+  const name = user?.fullName ?? "Guest";
+  const email = user?.email ?? "";
+  const initials = getInitials(name);
+  const storageUsedGB = user
+    ? (user.storageUsed / 1_073_741_824).toFixed(0)
+    : "0";
+  const storageLimitGB = user
+    ? (user.storageLimit / 1_073_741_824).toFixed(0)
+    : "200";
+  const storagePct = user
+    ? Math.round((user.storageUsed / user.storageLimit) * 100)
+    : 0;
+
+  async function handleLogout() {
+    await logoutUserApi(); // best-effort: clear session on server
+    logout(); // clear local state
+    toast.success("Logged out successfully");
+    router.push("/login");
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -35,7 +72,7 @@ export function ProfileMenu() {
           >
             <Avatar className="h-9 w-9 border border-border/60">
               <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-                AR
+                {initials}
               </AvatarFallback>
             </Avatar>
           </button>
@@ -45,13 +82,13 @@ export function ProfileMenu() {
         <div className="flex items-center gap-3 border-b border-border/60 p-3">
           <Avatar className="h-11 w-11">
             <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-              AR
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">Arjun Rathore</div>
+            <div className="truncate text-sm font-semibold">{name}</div>
             <div className="truncate text-xs text-muted-foreground">
-              arjun@desistorage.in
+              {email}
             </div>
           </div>
         </div>
@@ -61,12 +98,17 @@ export function ProfileMenu() {
             <span className="flex items-center gap-1.5 font-medium text-foreground">
               <HardDrive className="h-3.5 w-3.5 text-primary" /> Storage
             </span>
-            <span className="text-muted-foreground">128 / 200 GB</span>
+            <span className="text-muted-foreground">
+              {storageUsedGB} / {storageLimitGB} GB
+            </span>
           </div>
-          <Progress value={64} className="h-1.5" />
+          <Progress value={storagePct} className="h-1.5" />
           <Link
             href="/profile"
-            className={cn(buttonVariants({ size: "sm", variant: "outline" }), "mt-3 w-full")}
+            className={cn(
+              buttonVariants({ size: "sm", variant: "outline" }),
+              "mt-3 w-full",
+            )}
           >
             Manage account
           </Link>
@@ -80,39 +122,27 @@ export function ProfileMenu() {
             <User className="mr-2 h-4 w-4" /> Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem
-        // onClick={() => toast.info("Settings coming soon")}
-        >
+        <DropdownMenuItem>
           <Settings className="mr-2 h-4 w-4" /> Settings
         </DropdownMenuItem>
-        <DropdownMenuItem 
-        // onClick={() => toast.info("Billing portal opening…")}
-        >
+        <DropdownMenuItem>
           <CreditCard className="mr-2 h-4 w-4" /> Billing & plan
         </DropdownMenuItem>
-        <DropdownMenuItem
-        //   onClick={() => toast.info("Security center opening…")}
-        >
+        <DropdownMenuItem>
           <ShieldCheck className="mr-2 h-4 w-4" /> Security
         </DropdownMenuItem>
-        <DropdownMenuItem
-        //   onClick={() => toast.info("Appearance controls in header")}
-        >
+        <DropdownMenuItem>
           <Moon className="mr-2 h-4 w-4" /> Appearance
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem >
-          <Link
-            href="/profile"
-            // search={{ tab: "support" } as never}
-            className="cursor-pointer"
-          >
+        <DropdownMenuItem>
+          <Link href="/profile" className="cursor-pointer">
             <LifeBuoy className="mr-2 h-4 w-4" /> Help & support
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
-        //   onClick={() => toast.success("Signed out from this device")}
+          onClick={handleLogout}
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" /> Log out

@@ -1,13 +1,21 @@
 import { ArrowRight, Play, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-
+import Link from "next/link";
 
 export function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-28">
-      <div className="pointer-events-none absolute inset-0 bg-hero-glow" aria-hidden />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-grid [mask-image:radial-gradient(60%_50%_at_50%_20%,black,transparent)]" aria-hidden />
+    <section
+      id="top"
+      className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-28"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 bg-hero-glow"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[600px] bg-grid [mask-image:radial-gradient(60%_50%_at_50%_20%,black,transparent)]"
+        aria-hidden
+      />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -26,15 +34,21 @@ export function Hero() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-4xl text-balance text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Upload, organize, share and preview every file in one beautifully fast workspace.
-            End-to-end encrypted. Priced in rupees. Built for teams that ship.
+            Upload, organize, share and preview every file in one beautifully
+            fast workspace. End-to-end encrypted. Priced in rupees. Built for
+            teams that ship.
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="h-12 gap-2 px-6 text-base shadow-lg shadow-primary/20">
-              Start free — 15 GB
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <Link href="/dashboard">
+              <Button
+                size="lg"
+                className="h-12 gap-2 px-6 text-base shadow-lg shadow-primary/20"
+              >
+                Start free — 15 GB
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
             <Button
               size="lg"
               variant="outline"

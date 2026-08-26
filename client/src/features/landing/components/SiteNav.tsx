@@ -1,12 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { Menu, X } from "lucide-react";
+import { LayoutDashboardIcon, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import ThemeToggler from "@/components/ThemeToggle";
+import useUserStore, {
+  selectHydrated,
+  selectIsLoggedIn,
+} from "@/store/useUserStore";
+import { useInitializeAuth } from "@/hooks/useInitializeAuth";
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -16,6 +21,10 @@ const LINKS = [
 ];
 
 export function SiteNav() {
+  // Initialize Auth
+  useInitializeAuth();
+  const isUserLoggedIn = useUserStore(selectIsLoggedIn);
+  const hydrated = useUserStore(selectHydrated);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -53,22 +62,49 @@ export function SiteNav() {
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggler />
 
-          <Button variant="outline" size="sm" className="text-sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button size="sm" className="text-sm shadow-sm">
-            <Link href="/register">Get started free</Link>
-          </Button>
+          {hydrated && !isUserLoggedIn ? (
+            <>
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="text-sm">
+                  Sign in
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm" className="text-sm shadow-sm">
+                  Get started free
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <Link href="/dashboard">
+              <Button className="px-6 rounded-md" variant="default">
+                Dashboard
+              </Button>
+            </Link>
+          )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="inline-flex items-center justify-center md:hidden gap-2">
+          {hydrated && isUserLoggedIn && (
+            <Link href="/dashboard">
+              <Button
+                className="rounded-md hidden xs:block"
+                size="sm"
+                variant="default"
+              >
+                <span className="">Dashboard</span>
+              </Button>
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            onClick={() => setOpen((v) => !v)}
+            className=" h-9 w-9  rounded-md text-foreground "
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {open && (
@@ -86,12 +122,26 @@ export function SiteNav() {
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-border/60 pt-3">
               <div className="flex justify-end"></div>
-              <Button variant="ghost" size="sm">
-                <Link href="/login">Sign in</Link>
-              </Button>
-              <Button size="sm">
-                <Link href="/register">Get started free</Link>
-              </Button>
+              {!hydrated && !isUserLoggedIn && (
+                <>
+                  <Button variant="ghost" size="sm">
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                  <Button size="sm">
+                    <Link href="/register">Get started free</Link>
+                  </Button>
+                </>
+              )}
+
+              {hydrated && isUserLoggedIn && (
+                <Button
+                  className="rounded-md  xs:hidden"
+                  size="sm"
+                  variant="default"
+                >
+                  <span className="">Dashboard</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>

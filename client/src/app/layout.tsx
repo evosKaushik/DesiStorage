@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import RouteProgress from "@/components/RouteProgress";
+import ToastProvider from "@/components/ToastProvider";
+
 
 export const metadata: Metadata = {
   title: "DesiStorage",
@@ -28,6 +30,7 @@ export default function RootLayout({
             <RouteProgress />
           </Suspense>
           {children}
+          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>

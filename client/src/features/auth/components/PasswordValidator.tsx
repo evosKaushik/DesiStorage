@@ -1,6 +1,6 @@
 "use client";
-import { Check, Eye, EyeOff, X } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { Check, X } from "lucide-react";
+import React, { useMemo } from "react";
 
 // Constants
 const PASSWORD_REQUIREMENTS = [
@@ -96,7 +96,7 @@ const PasswordInput = ({
       </p>
 
       <ul className="space-y-1.5" aria-label="Password requirements">
-        {calculateStrength.requirements.map((req, index) => (
+        {calculateStrength.requirements.map((req) => (
           <li key={req.text} className="flex items-center space-x-2">
             {req.met ? (
               <Check size={16} className="text-emerald-500" />

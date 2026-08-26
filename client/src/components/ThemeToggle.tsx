@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Theme = "light" | "dark";
@@ -38,7 +39,7 @@ function subscribeTheme(callback: () => void) {
   return () => observer.disconnect();
 }
 
-function getTheme(): Theme {
+export function getTheme(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 

@@ -1,6 +1,8 @@
 import helmet from "@fastify/helmet";
-import type{ FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 
-export default async function (app: FastifyInstance) {
+// Must be fp-wrapped: a plain async wrapper creates an encapsulated
+// context, so the security headers never reach sibling route contexts.
+export default fp(async (app) => {
   await app.register(helmet);
-}
+});
