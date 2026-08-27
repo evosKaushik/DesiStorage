@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   User,
   HardDrive,
@@ -16,9 +17,31 @@ import { SessionsTab } from "./tabs/SessionsTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
 import { SupportTab } from "./tabs/SupportTab";
 
+const TABS = ["profile", "storage", "security", "sessions", "notifications", "support"] as const;
+type TabValue = (typeof TABS)[number];
+
+function isValidTab(v: string | null): v is TabValue {
+  return v !== null && (TABS as readonly string[]).includes(v);
+}
+
 export function ProfileTabs() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const raw = searchParams.get("tab");
+  const activeTab: TabValue = isValidTab(raw) ? raw : "profile";
+
+  function handleChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "profile") {
+      params.delete("tab");
+    } else {
+      params.set("tab", value);
+    }
+    router.replace(`/profile?${params.toString()}`, { scroll: false });
+  }
+
   return (
-    <Tabs defaultValue="profile" className="mt-8 flex flex-col">
+    <Tabs value={activeTab} onValueChange={handleChange} className="mt-8 flex flex-col">
       <TabsList className="h-auto flex-wrap justify-start gap-1 bg-muted/40 p-1">
         <TabsTrigger value="profile">
           <User className="mr-2 h-4 w-4" />

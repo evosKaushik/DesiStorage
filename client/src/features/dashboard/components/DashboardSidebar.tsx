@@ -118,22 +118,6 @@ export function DashboardSidebar() {
 
         <div className="my-2 border-t border-border/60" />
 
-        <Link
-          href="/profile"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            isProfile
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            collapsed && "justify-center px-2",
-          )}
-          title={collapsed ? "Profile & settings" : undefined}
-        >
-          <UserRound className="h-4.5 w-4.5 shrink-0" />
-          {!collapsed && (
-            <span className="flex-1 text-left">Profile & settings</span>
-          )}
-        </Link>
       </nav>
 
       <div className={cn("border-t border-border/60 p-4", collapsed && "px-2")}>

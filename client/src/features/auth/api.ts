@@ -1,5 +1,6 @@
 import type { RegisterSchema } from "./schema/register.schema";
 import type { LoginSchema } from "./schema/login.schema";
+import type { ChangePasswordSchema } from "@/features/profile/schema/changePassoword.schema";
 import { apiRequest, type ApiResult } from "@/utils/api";
 
 // ---------------------------------------------------------------------------
@@ -57,5 +58,18 @@ const loggedInUserApi = () =>
 const logoutUserApi = () =>
   apiRequest<null>("POST", "/auth/logout");
 
-export { registerUserApi, loginUserApi, loggedInUserApi, logoutUserApi };
+/**
+ * Changes the authenticated user's password.
+ * Server rotates all other sessions on success.
+ */
+const changePasswordApi = (payload: ChangePasswordSchema) =>
+  apiRequest<null>("POST", "/auth/change-password", payload);
+
+export {
+  registerUserApi,
+  loginUserApi,
+  loggedInUserApi,
+  logoutUserApi,
+  changePasswordApi,
+};
 export type { ApiResult };

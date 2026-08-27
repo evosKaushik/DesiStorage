@@ -7,9 +7,14 @@ import {
   useDashboardSearch,
   type DashboardTab,
 } from "@/features/dashboard/components/DashboardShell";
-import { FILES, SHARED_FILES, TRASH_FILES } from "@/features/dashboard/data/dashboard";
+import {
+  FILES,
+  SHARED_FILES,
+  TRASH_FILES,
+} from "@/features/dashboard/data/dashboard";
 import { TabView } from "@/features/dashboard/components/drive/TabView";
 import { PreviewPane } from "@/features/dashboard/components/drive/PreviewPane";
+import VerifyEmailBanner from "@/features/auth/components/VerifyEmailBanner";
 
 const VALID_TABS = new Set<DashboardTab>([
   "home",
@@ -44,6 +49,7 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-full">
       <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
+        <VerifyEmailBanner />
         <TabView
           tab={tab}
           query={query}

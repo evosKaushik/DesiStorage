@@ -15,6 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -65,19 +66,15 @@ export function ProfileMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={
-          <button
-            className="flex items-center rounded-full outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-            aria-label="Open profile menu"
-          >
-            <Avatar className="h-9 w-9 border border-border/60">
-              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        }
-      />
+        className="flex items-center rounded-full outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+        aria-label="Open profile menu"
+      >
+        <Avatar className="h-9 w-9 border border-border/60">
+          <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 p-0">
         <div className="flex items-center gap-3 border-b border-border/60 p-3">
           <Avatar className="h-11 w-11">
@@ -114,31 +111,36 @@ export function ProfileMenu() {
           </Link>
         </div>
 
-        <DropdownMenuLabel className="px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Account
-        </DropdownMenuLabel>
-        <DropdownMenuItem>
-          <Link href="/profile" className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" /> Profile
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" /> Settings
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <CreditCard className="mr-2 h-4 w-4" /> Billing & plan
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <ShieldCheck className="mr-2 h-4 w-4" /> Security
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Moon className="mr-2 h-4 w-4" /> Appearance
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Account
+          </DropdownMenuLabel>
+          <DropdownMenuItem>
+            <Link href="/profile" className="cursor-pointer flex items-center gap-2">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <CreditCard className="mr-2 h-4 w-4" /> Billing & plan
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <ShieldCheck className="mr-2 h-4 w-4" /> Security
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Moon className="mr-2 h-4 w-4" /> Appearance
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <Link href="/profile" className="cursor-pointer">
-            <LifeBuoy className="mr-2 h-4 w-4" /> Help & support
+          <Link href="/profile" className="cursor-pointer flex items-center gap-2">
+            <LifeBuoy className="mr-2 h-4 w-4" />
+            <span>Help & support</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem

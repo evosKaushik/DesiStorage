@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
 import { UploadProvider } from "./UploadContext";
 import { UploadPanel } from "./UploadPanel";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -41,10 +47,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     <UploadProvider>
       <SearchProvider>
         <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
-          <DashboardSidebar />
+          <Suspense fallback={null}>
+            <DashboardSidebar />
+          </Suspense>
           <div className="flex min-w-0 flex-1 flex-col">
             <DashboardHeader />
-            <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+            <main className="min-w-0 flex-1 overflow-y-auto">
+              
+              {children}
+            </main>
           </div>
         </div>
       </SearchProvider>

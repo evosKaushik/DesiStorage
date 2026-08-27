@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -34,10 +34,8 @@ export function SessionsTab() {
       description="Devices currently signed in to your DesiStorage account."
       right={
         <AlertDialog>
-          <AlertDialogTrigger>
-            <Button variant="outline" size="sm">
-              <LogOut className="mr-2 h-4 w-4" /> Sign out all other devices
-            </Button>
+          <AlertDialogTrigger className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign out all other devices
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

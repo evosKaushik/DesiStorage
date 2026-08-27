@@ -62,7 +62,7 @@ export function SiteNav() {
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggler />
 
-          {hydrated && !isUserLoggedIn ? (
+          {!isUserLoggedIn ? (
             <>
               <Link href="/login">
                 <Button variant="outline" size="sm" className="text-sm">
@@ -122,7 +122,7 @@ export function SiteNav() {
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-border/60 pt-3">
               <div className="flex justify-end"></div>
-              {!hydrated && !isUserLoggedIn && (
+              {hydrated && !isUserLoggedIn && (
                 <>
                   <Button variant="ghost" size="sm">
                     <Link href="/login">Sign in</Link>
@@ -134,13 +134,15 @@ export function SiteNav() {
               )}
 
               {hydrated && isUserLoggedIn && (
-                <Button
-                  className="rounded-md  xs:hidden"
-                  size="sm"
-                  variant="default"
-                >
-                  <span className="">Dashboard</span>
-                </Button>
+                <Link href="/dashboard">
+                  <Button
+                    className="rounded-md xs:hidden"
+                    size="sm"
+                    variant="default"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
               )}
             </div>
           </div>
