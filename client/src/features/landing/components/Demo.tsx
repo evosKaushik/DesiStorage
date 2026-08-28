@@ -113,7 +113,7 @@ export function InteractiveDemo() {
               <TabsTrigger
                 key={id}
                 value={id}
-                className="gap-2 rounded-full px-4 text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="gap-1.5 rounded-full px-2.5 text-xs sm:gap-2 sm:px-4 sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
@@ -180,16 +180,18 @@ function DemoFrame({ active, cycle }: { active: DemoState; cycle: number }) {
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
           </div>
-          <div className="mx-auto flex h-6 max-w-sm flex-1 items-center gap-2 rounded-md bg-background/70 px-3 text-[11px] text-muted-foreground ring-1 ring-inset ring-border/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            app.desistorage.com / Workspace / Marketing
+          <div className="mx-auto flex h-6 max-w-sm min-w-0 flex-1 items-center gap-2 rounded-md bg-background/70 px-3 text-[11px] text-muted-foreground ring-1 ring-inset ring-border/60">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+            <span className="truncate">
+              app.desistorage.com / Workspace / Marketing
+            </span>
           </div>
         </div>
 
         {/* Body */}
-        <div className="grid min-h-[440px] grid-cols-[56px_1fr] md:grid-cols-[220px_1fr]">
+        <div className="flex flex-col md:grid md:min-h-[440px] md:grid-cols-[220px_1fr]">
           <Sidebar />
-          <div className="flex flex-col">
+          <div className="flex min-h-0 flex-col">
             <Toolbar active={active} />
             <div className="relative flex-1 overflow-hidden bg-gradient-to-b from-background to-muted/20">
               <div
@@ -201,6 +203,7 @@ function DemoFrame({ active, cycle }: { active: DemoState; cycle: number }) {
                 {active === "preview" && <PreviewPane cycle={cycle} />}
               </div>
             </div>
+            <MobileNav />
           </div>
         </div>
       </div>
@@ -266,6 +269,36 @@ function Sidebar() {
   );
 }
 
+const MOBILE_NAV = [
+  { icon: Folder, label: "Files", active: true },
+  { icon: Users, label: "Shared" },
+  { icon: Upload, label: "Recents" },
+  { icon: ImageIcon, label: "Media" },
+  { icon: FileText, label: "Docs" },
+];
+
+function MobileNav() {
+  return (
+    <div className="flex items-stretch justify-around border-t border-border/60 bg-background/80 py-1.5 backdrop-blur md:hidden">
+      {MOBILE_NAV.map(({ icon: Icon, label, active }) => (
+        <button
+          key={label}
+          type="button"
+          className={cn(
+            "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-md py-1 text-[9px] transition-colors",
+            active
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          <span className="truncate">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Toolbar({ active }: { active: DemoState }) {
   const crumb =
     active === "upload"
@@ -274,10 +307,10 @@ function Toolbar({ active }: { active: DemoState }) {
         ? "Q4 Launch / Assets"
         : "Q4 Launch / Assets / hero-banner.png";
   return (
-    <div className="flex items-center gap-2 border-b border-border/60 bg-background/60 px-4 py-2.5">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Folder className="h-3.5 w-3.5" />
-        <span className="text-foreground">{crumb}</span>
+    <div className="flex min-w-0 items-center gap-2 border-b border-border/60 bg-background/60 px-4 py-2.5">
+      <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <Folder className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate text-foreground">{crumb}</span>
       </div>
       <div className="ml-auto flex items-center gap-2">
         <div className="hidden items-center gap-1.5 rounded-md border border-border/60 bg-background px-2 py-1 text-[11px] text-muted-foreground sm:flex">
