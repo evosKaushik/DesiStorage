@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-import { ThemeToggle } from "../ThemeToggle";
+import { ThemeToggle } from "../../../components/ThemeToggle";
 import Image from "next/image";
 
 const LINKS = [

@@ -1,3 +1,6 @@
+
+
+import gsap from "gsap";
 import {
   Cloud,
   FolderTree,
@@ -8,6 +11,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useRef } from "react";
 
 const FEATURES = [
   {
@@ -53,6 +57,8 @@ const FEATURES = [
 ];
 
 export function Features() {
+ 
+
   return (
     <section id="features" className="relative py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -64,7 +70,8 @@ export function Features() {
             A workspace as fast as your team
           </h2>
           <p className="mt-4 text-balance text-lg text-muted-foreground">
-            Every feature built with obsession — designed to disappear so you can just work.
+            Every feature built with obsession — designed to disappear so you
+            can just work.
           </p>
         </div>
 
@@ -78,7 +85,9 @@ export function Features() {
                 <f.icon className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-foreground">{f.title}</h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  {f.title}
+                </h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {f.desc}
                 </p>

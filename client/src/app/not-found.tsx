@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteNav } from "@/components/landing/SiteNav";
+import { SiteNav } from "@/features/landing/components/SiteNav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileQuestion, Home, Search } from "lucide-react";
 import Link from "next/link";
