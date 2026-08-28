@@ -12,43 +12,43 @@ import {
 const FEATURES = [
   {
     icon: Cloud,
-    title: "Unlimited uploads",
-    desc: "Drop files up to 5 GB each. Resumable, parallel, and blazing fast on any network.",
+    title: "Fast, resumable uploads",
+    desc: "Upload large files with resumable transfers designed to stay reliable across different network conditions.",
   },
   {
     icon: FolderTree,
-    title: "Real folder structure",
-    desc: "Nest folders, drag to move, colour-code projects. It behaves like Finder — because it should.",
+    title: "Organize your way",
+    desc: "Create folders, move files, and keep your workspace neatly organized as your storage grows.",
   },
   {
     icon: Search,
-    title: "AI search that works",
-    desc: "Ask “Q3 pitch deck” or “vendor invoices in March.” We find it, even inside PDFs and images.",
+    title: "Find files faster",
+    desc: "Search across your files and folders to quickly find what you need.",
   },
   {
     icon: Share2,
-    title: "Share with anyone",
-    desc: "Password-protected links, expiry dates, download limits and viewer analytics — built in.",
-  },
-  {
-    icon: Users,
-    title: "Team spaces",
-    desc: "Roles, granular permissions, and an activity log that keeps everyone honest.",
+    title: "Simple file sharing",
+    desc: "Create secure sharing links with access controls and expiration settings.",
   },
   {
     icon: Lock,
-    title: "End-to-end encrypted",
-    desc: "AES-256 at rest, TLS 1.3 in transit, zero-knowledge on shared vaults. Your files, your keys.",
+    title: "Encrypted storage",
+    desc: "Your files are protected with encryption in transit and at rest, alongside controlled access.",
   },
   {
-    icon: Zap,
-    title: "Instant previews",
-    desc: "Preview 200+ file types — from RAW photos to Figma exports — without downloading a byte.",
+    icon: Users,
+    title: "Private workspaces",
+    desc: "Keep your personal files organized in a workspace designed around your account and permissions.",
   },
   {
     icon: Sparkles,
-    title: "Automations",
-    desc: "Auto-tag, auto-organize, auto-share. Rules that run in the background, so you don’t have to.",
+    title: "Smart file experience",
+    desc: "Preview supported files, manage your storage, and access your content from one clean workspace.",
+  },
+  {
+    icon: Zap,
+    title: "Built for speed",
+    desc: "A responsive storage experience designed for uploading, organizing, sharing, and accessing files quickly.",
   },
 ];
 
@@ -64,7 +64,8 @@ export function Features() {
             A workspace as fast as your team
           </h2>
           <p className="mt-4 text-balance text-lg text-muted-foreground">
-            Every feature built with obsession — designed to disappear so you can just work.
+            Every feature built with obsession — designed to disappear so you
+            can just work.
           </p>
         </div>
 
@@ -78,7 +79,9 @@ export function Features() {
                 <f.icon className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-foreground">{f.title}</h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  {f.title}
+                </h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {f.desc}
                 </p>
