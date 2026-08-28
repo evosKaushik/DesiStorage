@@ -36,7 +36,7 @@ export function Hero() {
               made for{" "}
               <span
                 className="
-    bg-[linear-gradient(to_right,#FF6B00_0%,#F5F5F5_42%,#22C55E_65%,rgba(34,197,94,0.1)_100%)]
+    bg-[linear-gradient(to_right,#FF6B00_0%,#ADADAD_42%,#22C55E_65%,rgba(34,197,94,0.1)_100%)] dark:bg-[linear-gradient(to_right,#FF6B00_0%,#F5F5F5_42%,#22C55E_65%,rgba(34,197,94,0.1)_100%)]
     bg-clip-text
     text-transparent
   "

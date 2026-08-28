@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-
-import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/Logo";
 import ThemeToggler from "@/components/ThemeToggle";
@@ -49,11 +47,11 @@ export function SiteNav() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="inline-flex justify-center items-center gap-4 xs:gap-8">
           <ThemeToggler />
-        </div>
 
-        <Hamburger open={open} onClick={() => setOpen((v) => !v)} />
+          <Hamburger open={open} onClick={() => setOpen((v) => !v)} />
+        </div>
       </div>
 
       <HamburgerLinks LINKS={LINKS} setOpen={setOpen} open={open} />
