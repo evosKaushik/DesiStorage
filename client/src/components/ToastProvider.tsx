@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 /**
  * Thin client wrapper that adapts react-toastify to the current next-themes
@@ -23,3 +23,4 @@ export default function ToastProvider() {
     />
   );
 }
+

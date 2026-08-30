@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import type { LoggedInUser } from "@/features/auth/api";
+import type { LoginUser, MeUser } from "@/features/auth/api";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface UserState {
-  user: LoggedInUser | null;
+  /** The authenticated user. Read from `GET /auth` (full MeUser) or set at
+   *  login (LoginUser — which lacks `avatar`, defaulted to null). */
+  user: MeUser | null;
 
   /**
    * `true` after the initial session check completes (success or failure).
@@ -16,10 +18,10 @@ export interface UserState {
    */
   hydrated: boolean;
 
-  setUser: (user: LoggedInUser) => void;
+  setUser: (user: LoginUser | MeUser) => void;
   setHydrated: () => void;
   clearUser: () => void;
-  updateUser: (patch: Partial<LoggedInUser>) => void;
+  updateUser: (patch: Partial<MeUser>) => void;
   logout: () => void;
 }
 
@@ -48,7 +50,12 @@ const useUserStore = create<UserState>()(
 
     setUser: (user) =>
       set((draft) => {
-        draft.user = user;
+        // Login returns LoginUser (no `avatar`) — normalize to MeUser shape
+        if ("avatar" in user) {
+          draft.user = user;
+        } else {
+          draft.user = { ...user, avatar: null };
+        }
       }),
 
     setHydrated: () =>
