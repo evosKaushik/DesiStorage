@@ -5,6 +5,13 @@ import Logo from "@/components/Logo";
 import ThemeToggler from "@/components/ThemeToggle";
 import Hamburger from "./ui/Hamburger";
 import HamburgerLinks from "./ui/HamburgerLinks";
+import { useInitializeAuth } from "@/hooks/useInitializeAuth";
+import useUserStore, {
+  selectHydrated,
+  selectIsLoggedIn,
+} from "@/store/useUserStore";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -51,14 +58,44 @@ export function SiteNav() {
           ))}
         </nav>
 
-        <div className="inline-flex justify-center items-center gap-4 xs:gap-8">
+        <div className="inline-flex justify-center items-center gap-4 md:gap-8">
           <ThemeToggler />
+          <div className="hidden md:inline-flex space-x-2">
+            {!isUserLoggedIn ? (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="text-sm">
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/register" className="">
+                  <Button size="sm" className="text-sm shadow-sm">
+                    Get started free
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/dashboard">
+                <Button className="px-6 rounded-md" variant="default">
+                  Dashboard
+                </Button>
+              </Link>
+            )}
+          </div>
 
-          <Hamburger open={open} onClick={() => setOpen((v) => !v)} />
+          <div>
+            <Hamburger open={open} onClick={() => setOpen((v) => !v)} />
+          </div>
         </div>
       </div>
 
-      <HamburgerLinks LINKS={LINKS} setOpen={setOpen} open={open} />
+      <HamburgerLinks
+        LINKS={LINKS}
+        setOpen={setOpen}
+        open={open}
+        hydrated={hydrated}
+        isUserLoggedIn={isUserLoggedIn}
+      />
     </header>
   );
 }

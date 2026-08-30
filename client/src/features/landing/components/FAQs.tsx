@@ -42,23 +42,7 @@ export function FAQ() {
             Questions, answered
           </h2>
         </div>
-
-        <Accordion itemType="single" className="mt-12 w-full">
-          {FAQS.map((f, i) => (
-            <AccordionItem
-              key={i}
-              value={`item-${i}`}
-              className="border-border"
-            >
-              <AccordionTrigger className="text-left text-base font-medium text-foreground hover:no-underline">
-                {f.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-[15px] leading-relaxed text-muted-foreground">
-                {f.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <FAQAccordion items={FAQS} />
       </div>
     </section>
   );

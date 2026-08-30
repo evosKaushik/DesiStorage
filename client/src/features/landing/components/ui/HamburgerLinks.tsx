@@ -1,8 +1,9 @@
-
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import Link from "next/link";
 import { useRef } from "react";
 
 interface Link {
@@ -14,9 +15,17 @@ interface Props {
   open: boolean;
   setOpen: (value: boolean) => void;
   LINKS: Link[];
+  hydrated: boolean;
+  isUserLoggedIn: boolean;
 }
 
-const HamburgerLinks = ({ LINKS, setOpen, open }: Props) => {
+const HamburgerLinks = ({
+  LINKS,
+  setOpen,
+  open,
+  hydrated,
+  isUserLoggedIn,
+}: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -41,7 +50,7 @@ const HamburgerLinks = ({ LINKS, setOpen, open }: Props) => {
             pointerEvents: "auto",
             duration: 0.5,
             ease: "power3.out",
-          }
+          },
         );
       } else {
         // Menu closing
@@ -57,8 +66,10 @@ const HamburgerLinks = ({ LINKS, setOpen, open }: Props) => {
     {
       dependencies: [open],
       scope: containerRef,
-    }
+    },
   );
+
+  console.log(hydrated, isUserLoggedIn);
 
   return (
     <div
@@ -99,9 +110,28 @@ const HamburgerLinks = ({ LINKS, setOpen, open }: Props) => {
           </a>
         ))}
       </div>
+      <div className="mt-2 w-[90%] mx-auto flex max-xs:flex-col gap-2 border-t border-border pt-3 ">
+        {hydrated && !isUserLoggedIn && (
+          <>
+            <Button variant="outline" size="sm" className="grow">
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button size="sm" className="grow">
+              <Link href="/register">Get started free</Link>
+            </Button>
+          </>
+        )}
+
+        {hydrated && isUserLoggedIn && (
+          <Link href="/dashboard" className="grow">
+            <Button className="rounded-md w-full" size="sm" variant="default">
+              Dashboard
+            </Button>
+          </Link>
+        )}
+      </div>
     </div>
   );
 };
 
 export default HamburgerLinks;
-

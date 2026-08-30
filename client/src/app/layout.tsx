@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import RouteProgress from "@/components/RouteProgress";
 import ToastProvider from "@/components/ToastProvider";
 
-
 export const metadata: Metadata = {
   title: "DesiStorage",
   description:
@@ -18,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col ">
         <ThemeProvider
           attribute="class"

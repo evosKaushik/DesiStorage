@@ -50,8 +50,10 @@ export function Hero() {
             workspace. Secure storage, straightforward pricing in rupees, and an
             experience designed for everyday users and teams.
           </p>
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <h1 className="text-4xl font-bold">Coming Soon...</h1>
+          <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" className="px-4 text-xl">
+              Get Free 500MB
+            </Button>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
