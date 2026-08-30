@@ -237,6 +237,16 @@
   animation: float-slow 6s ease-in-out infinite;
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@utility animate-shimmer {
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
 @keyframes demo-progress-fill {
   from {
     width: 0%;

@@ -14,6 +14,7 @@ import { setSessionIdCookie, clearSessionIdCookie } from "../utils/cookies.js";
 import { ApiError } from "../utils/ApiError.js";
 import { redisClient } from "../config/redis.js";
 import User from "../models/user.model.js";
+import Session from "../models/session.model.js";
 import { generateOTP } from "../utils/generateOTP.js";
 import { OTP_TTL_SECONDS } from "../constants/constant.js";
 import {
@@ -260,18 +261,26 @@ const logoutSessionHandler = async (
   return reply.success(200, "Session logged out successfully", null);
 };
 
-// Logout from all devices (including current)
+// Logout from all other devices (keep current session)
 const logoutAllSessionsHandler = async (
   req: FastifyRequest,
   reply: FastifyReply,
 ) => {
   const authUser = requireAuthUser(req);
+  const currentSessionId = resolveVerifiedSessionId(req);
 
-  await revokeAllOtherSessions(authUser.id);
+  const sessionCount = await Session.countDocuments({
+    userId: authUser.id,
+    _id: { $ne: currentSessionId },
+  });
 
-  clearSessionIdCookie(reply);
+  if (sessionCount === 0) {
+    return reply.success(200, "No other active sessions to sign out", null);
+  }
 
-  return reply.success(200, "Logged out from all devices", null);
+  await revokeAllOtherSessions(authUser.id, currentSessionId);
+
+  return reply.success(200, "Logged out from all other devices", null);
 };
 
 export {

@@ -30,22 +30,10 @@ export const createSessionForUser = async (
 };
 
 export const resolveVerifiedSessionId = (req: FastifyRequest): string => {
-  const rawCookie = req.cookies.sid;
+  const sessionId = resolveOptionalSessionId(req);
 
-  if (!rawCookie) {
+  if (!sessionId) {
     throw new ApiError(401, "Unauthorized");
-  }
-
-  const { valid, value } = req.unsignCookie(rawCookie);
-
-  if (!valid) {
-    throw new ApiError(401, "Invalid session");
-  }
-
-  const [sessionId] = value.split(".");
-
-  if (!sessionId || !isValidObjectId(sessionId)) {
-    throw new ApiError(401, "Invalid session");
   }
 
   return sessionId;
