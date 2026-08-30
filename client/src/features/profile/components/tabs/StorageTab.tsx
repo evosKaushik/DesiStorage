@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { SectionCard } from "../SectionCard";
+import useUserStore, { selectUser } from "@/store/useUserStore";
+import UseStorageDetails from "@/hooks/useStorageDetails";
 
 const STORAGE_BREAKDOWN = [
   {
@@ -18,16 +20,23 @@ const STORAGE_BREAKDOWN = [
 ];
 
 export function StorageTab() {
+  const user = useUserStore(selectUser);
+
+  const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
+    UseStorageDetails(user?.storageUsed, user?.storageLimit);
+
   return (
     <div className="space-y-6">
       <SectionCard
         title="Storage usage"
-        description="128 GB of 200 GB used across your workspace."
+        description={`${formattedStorageUsed} of ${formattedStorageLimit} used across your workspace.`}
       >
         <Progress value={64} className="h-2" />
         <div className="mt-3 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">72 GB free</span>
-          <span className="font-semibold">64%</span>
+          <span className="text-muted-foreground">
+            {formattedStorageUsed} free
+          </span>
+          <span className="font-semibold">{percentageUsed}%</span>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {STORAGE_BREAKDOWN.map((b) => (

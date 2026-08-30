@@ -10,10 +10,7 @@ import {
   loginUser,
   sendOTPToEmail,
 } from "../services/auth.service.js";
-import {
-  setSessionIdCookie,
-  clearSessionIdCookie,
-} from "../utils/cookies.js";
+import { setSessionIdCookie, clearSessionIdCookie } from "../utils/cookies.js";
 import { ApiError } from "../utils/ApiError.js";
 import { redisClient } from "../config/redis.js";
 import User from "../models/user.model.js";
@@ -81,6 +78,12 @@ const sendVerificationHandler = async (
   const { fullName, email, id } = user;
   const otpKey = getUserOtpCacheKey(id);
 
+  const cachedOTP = await redisClient.get(otpKey);
+
+  if (cachedOTP) {
+    throw new ApiError(400, "OTP is still valid");
+  }
+
   const OTP = generateOTP(); // Generate only
 
   await redisClient.set(otpKey, OTP, {
@@ -127,7 +130,10 @@ const verifyEmailHandler = async (
   const storedOTP = await redisClient.get(otpKey);
 
   if (!storedOTP) {
-    throw new ApiError(400, "OTP expired or not found, please request a new one");
+    throw new ApiError(
+      400,
+      "OTP expired or not found, please request a new one",
+    );
   }
 
   if (otp !== storedOTP) {
@@ -146,7 +152,6 @@ const verifyEmailHandler = async (
 
   await redisClient.del([
     otpKey,
-    // Bust cached profile so `isEmailVerified` is fresh immediately
     getUserProfileCacheKey(userId),
   ]);
 

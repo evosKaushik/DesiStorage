@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// NOTE: Mock/demo implementation for now.
+// Wire up to the real API:
+//   - Resend  -> POST /auth/send-email
+//   - Verify  -> POST /auth/verify-email
+// Both endpoints require an authenticated session (register does not set
+// one yet), so the backend needs an auto-login or public resend endpoint.
 const DEMO_CODE = "482913";
 const LENGTH = 6;
 
 const VerifyEmail = ({ email }: { email: string }) => {
+  const router = useRouter();
   const [digits, setDigits] = useState<string[]>(Array(LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -68,15 +76,18 @@ const VerifyEmail = ({ email }: { email: string }) => {
       return;
     }
     setLoading(true);
+    // TODO(API): Replace mock check with POST /auth/verify-email { otp: code }
     setTimeout(() => {
       setLoading(false);
       if (code !== DEMO_CODE) {
         setError("That code isn't valid or has expired. Try again.");
+        // TODO(UI): Show an error toast on failed verification
 
         setDigits(Array(LENGTH).fill(""));
         inputs.current[0]?.focus();
         return;
       }
+      // TODO(UI): Show a success toast ("Email verified")
       setVerified(true);
     }, 1000);
   }
@@ -96,7 +107,10 @@ const VerifyEmail = ({ email }: { email: string }) => {
             </p>
           </div>
         </div>
-        <Button className="h-11 w-full rounded-xl shadow-sm">
+        <Button
+          className="h-11 w-full rounded-xl shadow-sm"
+          onClick={() => router.push("/dashboard")}
+        >
           Go to my Dashboard
         </Button>
       </div>
@@ -106,8 +120,12 @@ const VerifyEmail = ({ email }: { email: string }) => {
   return (
     <>
 
-      <div className="space-y-6">
-        <form onSubmit={onSubmit} className="space-y-5" noValidate>
+          <div className="space-y-6">
+            <p className="text-center text-sm text-muted-foreground">
+              Sent to{" "}
+              <span className="font-medium text-foreground">{email}</span>
+            </p>
+            <form onSubmit={onSubmit} className="space-y-5" noValidate>
           <div className="flex justify-between gap-2">
             {digits.map((d, i) => (
               <input
@@ -147,6 +165,8 @@ const VerifyEmail = ({ email }: { email: string }) => {
             disabled={coolDown > 0}
             onClick={() => {
               setCoolDown(30);
+              // TODO(API): Call POST /auth/send-email to actually resend the OTP
+              // TODO(UI): Show a success toast ("New code sent to <email>")
             }}
             className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
           >

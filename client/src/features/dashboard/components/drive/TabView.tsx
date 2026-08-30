@@ -48,6 +48,7 @@ export function TabView({
         setView={setView}
         openPicker={openPicker}
       >
+        
         <FilesSection
           files={filter(SHARED_FILES)}
           view={view}

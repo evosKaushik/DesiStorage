@@ -1,11 +1,12 @@
 import { Mail, Phone, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Field } from "../Field";
 import { SectionCard } from "../SectionCard";
+import useUserStore, { selectUser } from "@/store/useUserStore";
 
 export function ProfileTab() {
+  const user = useUserStore(selectUser);
+  if (!user) return null;
   return (
     <SectionCard
       title="Personal details"
@@ -17,30 +18,13 @@ export function ProfileTab() {
           e.preventDefault();
         }}
       >
-        <Field label="Full name" defaultValue="Arjun Rathore" />
-        <Field label="Display name" defaultValue="Arjun" />
+        <Field label="Full name" defaultValue={user.fullName} />
         <Field
           label="Email address"
           type="email"
-          defaultValue="arjun@desistorage.in"
+          defaultValue={user.email}
           icon={Mail}
         />
-        <Field
-          label="Phone"
-          defaultValue="+91 98••• ••432"
-          icon={Phone}
-        />
-        <Field label="Company" defaultValue="DesiStorage Labs" />
-        <Field label="Role" defaultValue="Senior Product Designer" />
-        <Field label="Country / region" defaultValue="India" icon={Globe} />
-        <Field label="Preferred language" defaultValue="English (India)" />
-        <div className="md:col-span-2">
-          <Label className="mb-1.5 block text-sm">Bio</Label>
-          <Textarea
-            rows={3}
-            defaultValue="Designing calm, secure cloud tools for teams across India."
-          />
-        </div>
         <div className="md:col-span-2 flex justify-end gap-2">
           <Button type="button" variant="ghost">
             Cancel

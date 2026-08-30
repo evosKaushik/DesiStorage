@@ -13,6 +13,10 @@ const LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 export function SiteNav() {
+  // Initialize Auth
+  useInitializeAuth();
+  const isUserLoggedIn = useUserStore(selectIsLoggedIn);
+  const hydrated = useUserStore(selectHydrated);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
