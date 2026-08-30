@@ -6,6 +6,9 @@ import {
   sendVerificationHandler,
   logoutHandler,
   changePasswordHandler,
+  getAllSessionsHandler,
+  logoutSessionHandler,
+  logoutAllSessionsHandler,
 } from "../../controllers/auth.controller.js";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import {
@@ -14,7 +17,12 @@ import {
   registerUserSchema,
   verifyEmailSchema,
 } from "../../schemas/auth.schema.js";
+import { z } from "zod";
 import { authenticate } from "../../middleware/auth.middleware.js";
+
+const sessionParamsSchema = z.object({
+  sessionId: z.string().min(1),
+});
 
 const userRoutes: FastifyPluginAsyncZod = async (app) => {
   // Register Route
@@ -67,6 +75,25 @@ const userRoutes: FastifyPluginAsyncZod = async (app) => {
       preHandler: authenticate,
     },
     changePasswordHandler,
+  );
+  // Get All Active Sessions
+  app.get("/sessions", { preHandler: authenticate }, getAllSessionsHandler);
+  // Logout from all devices (including current)
+  app.post(
+    "/logout/all",
+    { preHandler: authenticate },
+    logoutAllSessionsHandler,
+  );
+  // Logout a Specific Session
+  app.post(
+    "/logout/:sessionId",
+    {
+      schema: {
+        params: sessionParamsSchema,
+      },
+      preHandler: authenticate,
+    },
+    logoutSessionHandler,
   );
 };
 

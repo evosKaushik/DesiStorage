@@ -1,4 +1,3 @@
-import type { ObjectId } from "mongoose";
 import User from "../models/user.model.js";
 import type {
   RegisterUserBody,
@@ -6,6 +5,8 @@ import type {
 } from "../schemas/auth.schema.js";
 import { ApiError } from "../utils/ApiError.js";
 import { sendEmail } from "../utils/email.js";
+import Session from "../models/session.model.js";
+import { MAX_SESSIONS } from "../constants/constant.js";
 
 const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
   const existingUser = await User.findOne({ email });
@@ -34,6 +35,15 @@ const loginUser = async ({ email, password }: LoginUserBody) => {
 
   if (!isValidPassword) {
     throw new ApiError(401, "Invalid email or password");
+  }
+
+  const sessionCount = await Session.countDocuments({ userId: user._id });
+
+  if (sessionCount >= MAX_SESSIONS) {
+    throw new ApiError(
+      429,
+      `You have reached the maximum of ${MAX_SESSIONS} active sessions. Please log out of an existing device first.`,
+    );
   }
 
   return {

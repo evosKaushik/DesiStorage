@@ -21,4 +21,5 @@ const clearSessionIdCookie = (reply: FastifyReply) => {
     path: "/",
   });
 };
+
 export { setSessionIdCookie, clearSessionIdCookie };
