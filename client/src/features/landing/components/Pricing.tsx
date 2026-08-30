@@ -2,55 +2,64 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+
 const PLANS = [
   {
     name: "Starter",
-    price: "₹0",
+    price: "Free",
     period: "forever",
-    tagline: "For personal projects and side hustles.",
-    cta: "Start free",
-    features: [
-      "15 GB storage",
-      "Uploads up to 2 GB / file",
-      "Basic sharing with links",
-      "Preview 200+ file types",
-      "Email support",
-    ],
+    tagline: "A simple place to keep your personal files.",
+    cta: "Coming Soon",
     highlight: false,
+
+    features: [
+      "500 MB storage",
+      "Basic file uploads",
+      "File and folder organization",
+      "Basic sharing links",
+      "Supported file previews",
+      "Standard support",
+    ],
   },
+
   {
     name: "Pro",
-    price: "₹399",
+    price: "Coming soon",
     period: "per user / month",
-    tagline: "For freelancers and small teams.",
-    cta: "Start 14-day trial",
+    tagline: "More space and powerful tools for individuals and small teams.",
+    cta: "Coming Soon",
+    highlight: true,
+
     features: [
-      "2 TB storage per user",
-      "Uploads up to 5 GB / file",
-      "Password + expiry on links",
-      "AI file search",
-      "Advanced permissions",
+      "More storage",
+      "Larger file uploads",
+      "Advanced sharing controls",
+      "Password-protected links",
+      "Link expiration",
       "Priority support",
     ],
-    highlight: true,
   },
+
   {
     name: "Business",
-    price: "₹899",
+    price: "Coming soon",
     period: "per user / month",
-    tagline: "For fast-moving companies.",
-    cta: "Talk to sales",
-    features: [
-      "Unlimited storage",
-      "Uploads up to 50 GB / file",
-      "SSO (SAML, Google, Microsoft)",
-      "Admin console & audit logs",
-      "Data residency choice",
-      "24×7 dedicated support",
-    ],
+    tagline: "Flexible storage and collaboration for growing teams.",
+    cta: "Coming Soon",
     highlight: false,
+
+    features: [
+      "Higher storage limits",
+      "Large file uploads",
+      "Team workspaces",
+      "Advanced permissions",
+      "Admin controls",
+      "Activity and audit history",
+    ],
   },
 ];
+
+
 
 export function Pricing() {
   return (
@@ -64,7 +73,8 @@ export function Pricing() {
             Priced in rupees. No surprises.
           </h2>
           <p className="mt-4 text-balance text-lg text-muted-foreground">
-            Start free, upgrade when you outgrow it. GST included on every invoice.
+            Start free, upgrade when you outgrow it. GST included on every
+            invoice.
           </p>
         </div>
 
@@ -85,14 +95,20 @@ export function Pricing() {
                 </span>
               )}
 
-              <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{plan.tagline}</p>
+              <h3 className="text-lg font-semibold text-foreground">
+                {plan.name}
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {plan.tagline}
+              </p>
 
               <div className="mt-6 flex items-baseline gap-2">
                 <span className="text-5xl font-bold tracking-tight text-foreground">
                   {plan.price}
                 </span>
-                <span className="text-sm text-muted-foreground">{plan.period}</span>
+                <span className="text-sm text-muted-foreground">
+                  {plan.period}
+                </span>
               </div>
 
               <Button
@@ -110,7 +126,10 @@ export function Pricing() {
 
               <ul className="flex flex-col gap-3">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-foreground">
+                  <li
+                    key={f}
+                    className="flex items-start gap-2.5 text-sm text-foreground"
+                  >
                     <span
                       className={cn(
                         "mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full",
@@ -130,7 +149,13 @@ export function Pricing() {
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
-          Need something custom? <a href="#" className="font-medium text-foreground underline underline-offset-4 hover:text-primary">Contact sales →</a>
+          Need something custom?{" "}
+          <a
+            href="#"
+            className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+          >
+            Contact sales →
+          </a>
         </p>
       </div>
     </section>

@@ -135,7 +135,8 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;
+    scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent)
+      transparent;
   }
 
   ::-webkit-scrollbar {
@@ -164,6 +165,7 @@
 
   html {
     font-family: var(--font-sans);
+    scroll-behavior: smooth;
   }
 
   body {
@@ -369,3 +371,5 @@
     0 0 10px var(--color-primary),
     0 0 5px var(--color-primary);
 }
+
+

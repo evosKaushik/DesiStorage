@@ -3,12 +3,18 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FileCard } from "./FileCard";
 import { FILES } from "@/features/dashboard/data/dashboard";
+import useUserStore, { selectUser } from "@/store/useUserStore";
+import UseStorageDetails from "@/hooks/useStorageDetails";
 
 export function HomeTab({
   setSelected,
 }: {
   setSelected: (id: string | null) => void;
 }) {
+  const user = useUserStore(selectUser);
+
+  const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
+    UseStorageDetails(user?.storageUsed, user?.storageLimit);
   const suggestions = FILES.slice(0, 4);
   return (
     <>
@@ -29,8 +35,8 @@ export function HomeTab({
         <StatCard
           icon={HardDrive}
           label="Storage used"
-          value="128 GB"
-          hint="of 200 GB · 64%"
+          value={formattedStorageUsed.toString()}
+          hint={`of ${formattedStorageLimit} ${percentageUsed}%`}
         />
         <StatCard
           icon={TrendingUp}

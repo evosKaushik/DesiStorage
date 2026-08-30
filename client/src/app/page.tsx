@@ -1,3 +1,4 @@
+import SmoothScroll from "@/components/SmoothScroll";
 import { CTA } from "@/features/landing/components/CTA";
 import { InteractiveDemo } from "@/features/landing/components/Demo";
 import { FAQ } from "@/features/landing/components/FAQs";
@@ -11,6 +12,7 @@ import { Testimonials } from "@/features/landing/components/Testimonials";
 export default function Home() {
   return (
     <>
+      <SmoothScroll />
       <SiteNav />
       <Hero />
       <Features />

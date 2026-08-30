@@ -1,37 +1,35 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { FAQAccordion } from "./FAQAccordion";
 
 const FAQS = [
   {
-    q: "Is my data actually stored in India?",
-    a: "Yes. Every byte lives in ap-south-1 (Mumbai) by default, with optional replication to Delhi and Bengaluru on Business plans.",
+    q: "Is my data stored in India?",
+    a: "Yes. DesiStorage is designed with India-based data storage in mind, helping keep your files closer to home.",
   },
   {
-    q: "How is DesiStorage different from Dropbox or Google Drive?",
-    a: "We are priced in rupees, host data in India, and ship features (like AI search and password-protected links) that are usually reserved for the highest tiers elsewhere.",
+    q: "How is DesiStorage different from other cloud storage services?",
+    a: "DesiStorage is built with Indian users in mind, with pricing in rupees, a simple file experience, secure sharing, and infrastructure designed for users in India.",
   },
   {
-    q: "Can I invite people who don’t have an account?",
-    a: "Absolutely. Share a link with an optional password and expiry — recipients can preview and download without signing up.",
+    q: "Can I share files with someone who doesn't have an account?",
+    a: "Yes. Supported sharing links can be accessed by recipients without creating a DesiStorage account.",
   },
   {
-    q: "What happens to my files if I cancel?",
-    a: "You keep read-only access for 30 days to export everything. We never hold your data hostage.",
+    q: "What happens to my files if I cancel my plan?",
+    a: "Your files remain subject to our storage and retention policies. We recommend downloading files that exceed your new plan's storage limit before the plan changes.",
   },
   {
     q: "Do you offer discounts for startups or non-profits?",
-    a: "Yes — 50% off for eligible early-stage startups and 100% off Pro for registered non-profits. Reach out to sales.",
+    a: "Special pricing programs may become available as DesiStorage grows. Check our pricing page for current offers.",
   },
   {
     q: "Which file types can I preview?",
-    a: "200+ formats — from PDFs, DOCX and PSD to RAW photos, Figma exports, 3D models and video up to 4K.",
+    a: "DesiStorage supports previews for selected common file types, with support expanding as we add new capabilities.",
+  },
+  {
+    q: "Are my files encrypted?",
+    a: "Yes. DesiStorage protects stored data with encryption and uses secure connections when your files move between your device and our services.",
   },
 ];
-
 export function FAQ() {
   return (
     <section id="faq" className="relative py-24 sm:py-32">
@@ -44,19 +42,7 @@ export function FAQ() {
             Questions, answered
           </h2>
         </div>
-
-        <Accordion itemType="single"  className="mt-12 w-full">
-          {FAQS.map((f, i) => (
-            <AccordionItem key={i} value={`item-${i}`} className="border-border">
-              <AccordionTrigger className="text-left text-base font-medium text-foreground hover:no-underline">
-                {f.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-[15px] leading-relaxed text-muted-foreground">
-                {f.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <FAQAccordion items={FAQS} />
       </div>
     </section>
   );

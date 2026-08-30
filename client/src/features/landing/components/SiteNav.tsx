@@ -1,12 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-
-import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import Logo from "@/components/Logo";
 import ThemeToggler from "@/components/ThemeToggle";
+import Hamburger from "./ui/Hamburger";
+import HamburgerLinks from "./ui/HamburgerLinks";
+import { useInitializeAuth } from "@/hooks/useInitializeAuth";
+import useUserStore, {
+  selectHydrated,
+  selectIsLoggedIn,
+} from "@/store/useUserStore";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -14,8 +19,11 @@ const LINKS = [
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
 ];
-
 export function SiteNav() {
+  // Initialize Auth
+  useInitializeAuth();
+  const isUserLoggedIn = useUserStore(selectIsLoggedIn);
+  const hydrated = useUserStore(selectHydrated);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -50,52 +58,44 @@ export function SiteNav() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="inline-flex justify-center items-center gap-4 md:gap-8">
           <ThemeToggler />
+          <div className="hidden md:inline-flex space-x-2">
+            {!isUserLoggedIn ? (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="text-sm">
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/register" className="">
+                  <Button size="sm" className="text-sm shadow-sm">
+                    Get started free
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/dashboard">
+                <Button className="px-6 rounded-md" variant="default">
+                  Dashboard
+                </Button>
+              </Link>
+            )}
+          </div>
 
-          <Button variant="outline" size="sm" className="text-sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button size="sm" className="text-sm shadow-sm">
-            <Link href="/register">Get started free</Link>
-          </Button>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {open && (
-        <div className="border-t border-border/60 bg-background md:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
-            {LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ))}
-            <div className="mt-2 flex flex-col gap-2 border-t border-border/60 pt-3">
-              <div className="flex justify-end"></div>
-              <Button variant="ghost" size="sm">
-                <Link href="/login">Sign in</Link>
-              </Button>
-              <Button size="sm">
-                <Link href="/register">Get started free</Link>
-              </Button>
-            </div>
+          <div>
+            <Hamburger open={open} onClick={() => setOpen((v) => !v)} />
           </div>
         </div>
-      )}
+      </div>
+
+      <HamburgerLinks
+        LINKS={LINKS}
+        setOpen={setOpen}
+        open={open}
+        hydrated={hydrated}
+        isUserLoggedIn={isUserLoggedIn}
+      />
     </header>
   );
 }

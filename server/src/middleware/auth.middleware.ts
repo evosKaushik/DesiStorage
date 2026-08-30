@@ -5,14 +5,60 @@ import { redisGetJson, redisSetJson } from "../utils/redis.js";
 import type { AuthUser } from "../types/fastify.js";
 import Session from "../models/session.model.js";
 import { redisClient } from "../config/redis.js";
-import { ONE_HOUR } from "../constants/constant.js";
 import {
+  ONE_HOUR,
+  SESSION_ACTIVITY_DB_WRITE_INTERVAL,
+  SESSION_ACTIVITY_REDIS_TTL,
+} from "../constants/constant.js";
+import {
+  getSessionActivityCacheKey,
   getUserProfileCacheKey,
   getUserSessionCacheKey,
 } from "../utils/cacheKeys.js";
 import { resolveVerifiedSessionId, revokeSessionById } from "../utils/session.js";
 
 type CachedUser = Omit<AuthUser, "id">;
+
+interface SessionActivity {
+  lastRedisUpdate: number;
+  lastDbWrite: number;
+}
+
+const updateSessionActivity = async (sessionId: string): Promise<void> => {
+  const now = Date.now();
+  const activityKey = getSessionActivityCacheKey(sessionId);
+
+  const cachedActivity = await redisGetJson<SessionActivity>(activityKey);
+
+  const lastRedisUpdate = cachedActivity?.lastRedisUpdate ?? 0;
+  const lastDbWrite = cachedActivity?.lastDbWrite ?? 0;
+
+  if (now - lastRedisUpdate < SESSION_ACTIVITY_REDIS_TTL * 1000) {
+    return;
+  }
+
+  let needsDbWrite = false;
+
+  if (now - lastDbWrite >= SESSION_ACTIVITY_DB_WRITE_INTERVAL) {
+    needsDbWrite = true;
+  }
+
+  await redisSetJson<SessionActivity>(
+    activityKey,
+    {
+      lastRedisUpdate: now,
+      lastDbWrite: needsDbWrite ? now : lastDbWrite,
+    },
+    ONE_HOUR,
+  );
+
+  if (needsDbWrite) {
+    await Session.updateOne(
+      { _id: sessionId },
+      { lastActiveAt: new Date(now) },
+    );
+  }
+};
 
 const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
   const sessionId = resolveVerifiedSessionId(req);
@@ -36,6 +82,8 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
     userId = session.userId.toString();
     await redisClient.set(sessionKey, userId, { EX: ONE_HOUR });
   }
+
+  void updateSessionActivity(sessionId);
 
   const userKey = getUserProfileCacheKey(userId);
 

@@ -10,10 +10,7 @@ import {
   loginUser,
   sendOTPToEmail,
 } from "../services/auth.service.js";
-import {
-  setSessionIdCookie,
-  clearSessionIdCookie,
-} from "../utils/cookies.js";
+import { setSessionIdCookie, clearSessionIdCookie } from "../utils/cookies.js";
 import { ApiError } from "../utils/ApiError.js";
 import { redisClient } from "../config/redis.js";
 import User from "../models/user.model.js";
@@ -21,15 +18,19 @@ import { generateOTP } from "../utils/generateOTP.js";
 import { OTP_TTL_SECONDS } from "../constants/constant.js";
 import {
   createSessionForUser,
+  getSessionsByUserId,
   requireAuthUser,
+  resolveOptionalSessionId,
   resolveVerifiedSessionId,
   revokeAllOtherSessions,
   revokeSessionById,
+  revokeSessionByOwner,
 } from "../utils/session.js";
 import {
   getUserOtpCacheKey,
   getUserProfileCacheKey,
 } from "../utils/cacheKeys.js";
+import { getFormattedUserAgent } from "../utils/UAParser.js";
 
 // Register user
 const createUserHandler = async (
@@ -53,9 +54,20 @@ const loginUserHandler = async (
   req: FastifyRequest<{ Body: LoginUserBody }>,
   reply: FastifyReply,
 ) => {
+  const existingSessionId = resolveOptionalSessionId(req);
+
+  if (existingSessionId) {
+    throw new ApiError(400, "You are already logged in");
+  }
+
   const user = await loginUser(req.body);
 
-  const userSession = await createSessionForUser(user.id.toString());
+  const userAgent = getFormattedUserAgent(req);
+
+  const userSession = await createSessionForUser({
+    userId: user.id,
+    ...userAgent,
+  });
 
   setSessionIdCookie(reply, userSession._id.toString());
 
@@ -80,6 +92,12 @@ const sendVerificationHandler = async (
 
   const { fullName, email, id } = user;
   const otpKey = getUserOtpCacheKey(id);
+
+  const cachedOTP = await redisClient.get(otpKey);
+
+  if (cachedOTP) {
+    throw new ApiError(400, "OTP is still valid");
+  }
 
   const OTP = generateOTP(); // Generate only
 
@@ -127,7 +145,10 @@ const verifyEmailHandler = async (
   const storedOTP = await redisClient.get(otpKey);
 
   if (!storedOTP) {
-    throw new ApiError(400, "OTP expired or not found, please request a new one");
+    throw new ApiError(
+      400,
+      "OTP expired or not found, please request a new one",
+    );
   }
 
   if (otp !== storedOTP) {
@@ -144,11 +165,7 @@ const verifyEmailHandler = async (
     throw new ApiError(404, "User not found");
   }
 
-  await redisClient.del([
-    otpKey,
-    // Bust cached profile so `isEmailVerified` is fresh immediately
-    getUserProfileCacheKey(userId),
-  ]);
+  await redisClient.del([otpKey, getUserProfileCacheKey(userId)]);
 
   req.log.info({
     event: "EMAIL_VERIFIED",
@@ -194,7 +211,7 @@ const changePasswordHandler = async (
   return reply.success(200, "Password changed successfully", null);
 };
 
-// Logout User
+// Logout User (current device)
 const logoutHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   const sessionId = resolveVerifiedSessionId(req);
 
@@ -204,6 +221,59 @@ const logoutHandler = async (req: FastifyRequest, reply: FastifyReply) => {
 
   return reply.success(200, "Logged out successfully", null);
 };
+
+// Get all active sessions for the authenticated user
+const getAllSessionsHandler = async (
+  req: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  const authUser = requireAuthUser(req);
+  const currentSessionId = resolveVerifiedSessionId(req);
+
+  const sessions = await getSessionsByUserId(authUser.id);
+
+  const formattedSessions = sessions.map((session) => ({
+    id: session._id.toString(),
+    device: session.device,
+    browserVersion: session.browserVersion,
+    operatingSystem: session.operatingSystem,
+    ip: session.ip,
+    countryCode: session.countryCode,
+    state: session.state,
+    lastActiveAt: session.lastActiveAt,
+    isCurrent: session._id.toString() === currentSessionId,
+  }));
+
+  return reply.success(200, "Sessions fetched successfully", formattedSessions);
+};
+
+// Logout a specific session (device) owned by the authenticated user
+const logoutSessionHandler = async (
+  req: FastifyRequest<{ Params: { sessionId: string } }>,
+  reply: FastifyReply,
+) => {
+  const authUser = requireAuthUser(req);
+  const { sessionId } = req.params;
+
+  await revokeSessionByOwner(sessionId, authUser.id);
+
+  return reply.success(200, "Session logged out successfully", null);
+};
+
+// Logout from all devices (including current)
+const logoutAllSessionsHandler = async (
+  req: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  const authUser = requireAuthUser(req);
+
+  await revokeAllOtherSessions(authUser.id);
+
+  clearSessionIdCookie(reply);
+
+  return reply.success(200, "Logged out from all devices", null);
+};
+
 export {
   createUserHandler,
   loginUserHandler,
@@ -212,4 +282,7 @@ export {
   sendVerificationHandler,
   changePasswordHandler,
   logoutHandler,
+  getAllSessionsHandler,
+  logoutSessionHandler,
+  logoutAllSessionsHandler,
 };
