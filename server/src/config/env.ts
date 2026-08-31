@@ -15,6 +15,9 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string(),
   // Redis
   REDIS_URL: z.url().or(z.string().startsWith("redis")),
+  RESET_PASSWORD_SECRET: z.string().min(32),
+
+  FRONTEND_URL: z.url(),
 });
 
 export const ENV = envSchema.parse(process.env);
