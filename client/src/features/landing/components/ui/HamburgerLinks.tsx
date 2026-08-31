@@ -69,7 +69,6 @@ const HamburgerLinks = ({
     },
   );
 
-  console.log(hydrated, isUserLoggedIn);
 
   return (
     <div
