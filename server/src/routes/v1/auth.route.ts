@@ -9,20 +9,23 @@ import {
   getAllSessionsHandler,
   logoutSessionHandler,
   logoutAllSessionsHandler,
+  forgotPasswordHandler,
+  verifyResetPasswordHandler,
+  resetPasswordHandler,
 } from "../../controllers/auth.controller.js";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import {
   changePasswordSchema,
+  forgotPasswordParamsSchema,
   loginUserSchema,
   registerUserSchema,
+  resetPasswordSchema,
+  sessionParamsSchema,
   verifyEmailSchema,
+  verifyResetPasswordQuerySchema,
 } from "../../schemas/auth.schema.js";
 import { z } from "zod";
 import { authenticate } from "../../middleware/auth.middleware.js";
-
-const sessionParamsSchema = z.object({
-  sessionId: z.string().min(1),
-});
 
 const userRoutes: FastifyPluginAsyncZod = async (app) => {
   // Register Route
@@ -94,6 +97,32 @@ const userRoutes: FastifyPluginAsyncZod = async (app) => {
       preHandler: authenticate,
     },
     logoutSessionHandler,
+  );
+  // forgot password email send
+  app.post(
+    "/forgot-password/:email",
+    {
+      schema: {
+        params: forgotPasswordParamsSchema,
+      },
+    },
+    forgotPasswordHandler,
+  );
+  // Verify rest token
+  app.get("/verify-reset-token", {
+    schema:{
+      querystring: verifyResetPasswordQuerySchema
+    }
+  }, verifyResetPasswordHandler);
+  // Reset password (token + new password)
+  app.post(
+    "/reset-password",
+    {
+      schema: {
+        body: resetPasswordSchema,
+      },
+    },
+    resetPasswordHandler,
   );
 };
 
