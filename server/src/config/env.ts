@@ -14,6 +14,8 @@ const envSchema = z.object({
   REDIS_URL: z.url().or(z.string().startsWith("redis")),
   // Cookie Secret
   COOKIE_SECRET: z.string().min(32),
+  // Password reset token secret
+  RESET_PASSWORD_SECRET: z.string().min(32),
   // CLOUDINARY
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),

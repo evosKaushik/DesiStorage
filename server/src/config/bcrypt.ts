@@ -1,1 +1,1 @@
-export const SALT_ROUNDS = 12;
+export const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;

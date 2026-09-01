@@ -45,8 +45,13 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
       type: [String],
       enum: ["local", "google"],
       required: [true, "Authentication provider is required"],
-      validator: (providers: string[]) =>
-        providers.length > 0 && new Set(providers).size === providers.length,
+      // note: the previous `validator:` key was a no-op; mongoose only honors
+      // `validate` for arrays. Without it, ["local","local"] would slip through.
+      validate: {
+        validator: (providers: string[]) =>
+          providers.length > 0 && new Set(providers).size === providers.length,
+        message: "Authentication providers cannot repeat",
+      },
     },
 
     // User email
@@ -96,11 +101,13 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
 
     // Stable Google account id (sub claim) — identity link independent of
     // the user's email, so local ↔ google merges never collide.
+    // No default on purpose: a `default: null` would materialise the field on
+    // every local account, and sparse unique indexes only skip *missing*
+    // fields — so nulls would collide.
     googleId: {
       type: String,
       unique: true,
       sparse: true,
-      default: null,
     },
 
     // User total Storage
