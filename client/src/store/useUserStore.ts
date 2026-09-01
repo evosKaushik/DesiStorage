@@ -50,11 +50,10 @@ const useUserStore = create<UserState>()(
 
     setUser: (user) =>
       set((draft) => {
-        // Login returns LoginUser (no `avatar`) — normalize to MeUser shape
         if ("avatar" in user) {
           draft.user = user;
         } else {
-          draft.user = { ...user, avatar: null };
+          draft.user = user;
         }
       }),
 
