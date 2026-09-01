@@ -1,14 +1,21 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
   ChangePasswordBody,
+  ForgotPasswordParams,
   LoginUserBody,
   RegisterUserBody,
+  ResetPasswordBody,
+  SessionParams,
   VerifyEmailBody,
+  VerifyResetPasswordQuery,
 } from "../schemas/auth.schema.js";
 import {
   createUser,
+  forgotPassword,
   loginUser,
+  resetPassword,
   sendOTPToEmail,
+  verifyResetPasswordToken,
 } from "../services/auth.service.js";
 import { setSessionIdCookie, clearSessionIdCookie } from "../utils/cookies.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -32,6 +39,7 @@ import {
   getUserProfileCacheKey,
 } from "../utils/cacheKeys.js";
 import { getFormattedUserAgent } from "../utils/UAParser.js";
+import { isValidObjectId } from "mongoose";
 
 // Register user
 const createUserHandler = async (
@@ -195,6 +203,15 @@ const changePasswordHandler = async (
   if (!isValidPassword) {
     throw new ApiError(401, "Invalid current password");
   }
+  
+  const isSamePassword = await user.comparePassword(newPassword);
+
+  if (isSamePassword) {
+    throw new ApiError(
+      400,
+      "New password must be different from the old password",
+    );
+  }
 
   const currentSessionId = resolveVerifiedSessionId(req);
 
@@ -250,7 +267,7 @@ const getAllSessionsHandler = async (
 
 // Logout a specific session (device) owned by the authenticated user
 const logoutSessionHandler = async (
-  req: FastifyRequest<{ Params: { sessionId: string } }>,
+  req: FastifyRequest<{ Params: SessionParams }>,
   reply: FastifyReply,
 ) => {
   const authUser = requireAuthUser(req);
@@ -283,6 +300,47 @@ const logoutAllSessionsHandler = async (
   return reply.success(200, "Logged out from all other devices", null);
 };
 
+// Forgot Password Handler
+const forgotPasswordHandler = async (
+  req: FastifyRequest<{ Params: ForgotPasswordParams }>,
+  reply: FastifyReply,
+) => {
+  const { email } = req.params;
+
+  await forgotPassword(email);
+
+  return reply.success(
+    200,
+    "If an account exists, a password reset link has been sent to your email.",
+    null,
+  );
+};
+// Verify Reset password Token
+const verifyResetPasswordHandler = async (
+  req: FastifyRequest<{
+    Querystring: VerifyResetPasswordQuery;
+  }>,
+  reply: FastifyReply,
+) => {
+  const { token } = req.query;
+
+  await verifyResetPasswordToken(token);
+
+  return reply.success(200, "Password reset token is valid.", null);
+};
+
+// Reset password (verify token + set new password)
+const resetPasswordHandler = async (
+  req: FastifyRequest<{ Body: ResetPasswordBody }>,
+  reply: FastifyReply,
+) => {
+  const { token, newPassword } = req.body;
+
+  await resetPassword(token, newPassword);
+
+  return reply.success(200, "Password reset successfully.", null);
+};
+
 export {
   createUserHandler,
   loginUserHandler,
@@ -294,4 +352,7 @@ export {
   getAllSessionsHandler,
   logoutSessionHandler,
   logoutAllSessionsHandler,
+  forgotPasswordHandler,
+  verifyResetPasswordHandler,
+  resetPasswordHandler,
 };
