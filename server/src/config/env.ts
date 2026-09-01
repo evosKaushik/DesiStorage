@@ -6,7 +6,8 @@ const envSchema = z.object({
   PORT: z.coerce.number(),
   HOST: z.string(),
   NODE_ENV: z.enum(["development", "production", "test"]),
-  
+  FRONTEND_URL: z.url(),
+
   // Mongodb
   MONGODB_URI: z.url().or(z.string().startsWith("mongodb")),
   // Redis
@@ -21,7 +22,9 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string(),
 
   // Google OAuth Credentials
-  GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com", "Invalid Google Client ID"),
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .endsWith(".apps.googleusercontent.com", "Invalid Google Client ID"),
 });
 
 export const ENV = envSchema.parse(process.env);

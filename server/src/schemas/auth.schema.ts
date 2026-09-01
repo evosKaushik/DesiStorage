@@ -103,6 +103,19 @@ export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
+export const googleLoginSchema = z.object({
+  idToken: z
+    .string()
+    .regex(
+      /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
+      "Invalid Google ID token",
+    ),
+  clientId: z
+    .string()
+    .min(1, "Client ID is required")
+    .endsWith(".apps.googleusercontent.com", "Invalid Google Client ID"),
+});
+
 export type RegisterUserBody = z.infer<typeof registerUserSchema>;
 
 export type LoginUserBody = z.infer<typeof loginUserSchema>;
@@ -120,3 +133,5 @@ export type VerifyResetPasswordQuery = z.infer<
 >;
 
 export type ResetPasswordBody = z.infer<typeof resetPasswordSchema>;
+
+export type GoogleLoginBody = z.infer<typeof googleLoginSchema>;

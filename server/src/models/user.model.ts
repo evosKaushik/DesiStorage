@@ -1,12 +1,16 @@
 import mongoose from "mongoose";
 import { SALT_ROUNDS } from "../config/bcrypt.js";
 import bcrypt from "bcrypt";
+import { DEFAULT_AVATAR } from "../constants/constant.js";
+
+export type AuthProvider = "local" | "google";
 
 export interface IUser {
   fullName: string;
   email: string;
-  password: string;
+  password: string | null;
   avatar: string;
+  authProviders: AuthProvider[];
   storageLimit: number;
   storageUsed: number;
   isEmailVerified: boolean;
@@ -35,6 +39,15 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
       ],
     },
 
+    // Auth Providers
+    authProviders: {
+      type: [String],
+      enum: ["local", "google"],
+      required: [true, "Authentication provider is required"],
+      validator: (providers: string[]) =>
+        providers.length > 0 && new Set(providers).size === providers.length,
+    },
+
     // User email
     email: {
       type: String,
@@ -49,11 +62,19 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
     // User password
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // required: [true, "Password is required"],
+      required: [
+        function (this: IUser) {
+          return this.authProviders.includes("local");
+        },
+        "Password is required for email authentication",
+      ],
+      default: null,
       minlength: [8, "Password must be at least 8 characters"],
       maxlength: [128, "Password must be at most 128 characters"],
       validate: {
-        validator: function (value: string) {
+        validator: function (value: string | null) {
+          if (value === null) return true;
           return (
             /[A-Z]/.test(value) &&
             /[a-z]/.test(value) &&
@@ -69,8 +90,7 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
 
     avatar: {
       type: String,
-      default:
-        "https://res.cloudinary.com/dvhqwwpdl/image/upload/v1777532041/default-avatar_frnvfo.jpg",
+      default: DEFAULT_AVATAR,
     },
 
     // User total Storage
@@ -90,7 +110,9 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
     // User is Verified
     isEmailVerified: {
       type: Boolean,
-      default: false,
+      default: function (this: IUser) {
+        return this.authProviders.includes("google");
+      },
     },
   },
   {
@@ -99,7 +121,7 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
 );
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password") || !this.password) return;
 
   this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
 });
@@ -107,6 +129,7 @@ userSchema.pre("save", async function () {
 userSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ) {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 

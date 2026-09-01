@@ -12,11 +12,13 @@ import {
   forgotPasswordHandler,
   verifyResetPasswordHandler,
   resetPasswordHandler,
+  handleGoogleLoginHandler,
 } from "../../controllers/auth.controller.js";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import {
   changePasswordSchema,
   forgotPasswordParamsSchema,
+  googleLoginSchema,
   loginUserSchema,
   registerUserSchema,
   resetPasswordSchema,
@@ -24,7 +26,6 @@ import {
   verifyEmailSchema,
   verifyResetPasswordQuerySchema,
 } from "../../schemas/auth.schema.js";
-import { z } from "zod";
 import { authenticate } from "../../middleware/auth.middleware.js";
 
 const userRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -109,11 +110,15 @@ const userRoutes: FastifyPluginAsyncZod = async (app) => {
     forgotPasswordHandler,
   );
   // Verify rest token
-  app.get("/verify-reset-token", {
-    schema:{
-      querystring: verifyResetPasswordQuerySchema
-    }
-  }, verifyResetPasswordHandler);
+  app.get(
+    "/verify-reset-token",
+    {
+      schema: {
+        querystring: verifyResetPasswordQuerySchema,
+      },
+    },
+    verifyResetPasswordHandler,
+  );
   // Reset password (token + new password)
   app.post(
     "/reset-password",
@@ -123,6 +128,16 @@ const userRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     resetPasswordHandler,
+  );
+  // Google OAuth2 login route
+  app.post(
+    "/google",
+    {
+      schema: {
+        body: googleLoginSchema,
+      },
+    },
+    handleGoogleLoginHandler,
   );
 };
 

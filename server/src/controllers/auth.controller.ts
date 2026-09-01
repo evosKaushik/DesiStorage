@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
   ChangePasswordBody,
   ForgotPasswordParams,
+  GoogleLoginBody,
   LoginUserBody,
   RegisterUserBody,
   ResetPasswordBody,
@@ -12,6 +13,7 @@ import type {
 import {
   createUser,
   forgotPassword,
+  googleAuthentication,
   loginUser,
   resetPassword,
   sendOTPToEmail,
@@ -39,7 +41,7 @@ import {
   getUserProfileCacheKey,
 } from "../utils/cacheKeys.js";
 import { getFormattedUserAgent } from "../utils/UAParser.js";
-import { isValidObjectId } from "mongoose";
+import { ENV } from "../config/env.js";
 
 // Register user
 const createUserHandler = async (
@@ -203,7 +205,7 @@ const changePasswordHandler = async (
   if (!isValidPassword) {
     throw new ApiError(401, "Invalid current password");
   }
-  
+
   const isSamePassword = await user.comparePassword(newPassword);
 
   if (isSamePassword) {
@@ -341,6 +343,32 @@ const resetPasswordHandler = async (
   return reply.success(200, "Password reset successfully.", null);
 };
 
+const handleGoogleLoginHandler = async (
+  req: FastifyRequest<{ Body: GoogleLoginBody }>,
+  reply: FastifyReply,
+) => {
+  const { idToken, clientId } = req.body;
+
+  if (clientId !== ENV.GOOGLE_CLIENT_ID) {
+    return reply.error(400, "Invalid Google Client ID");
+  }
+
+  const user = await googleAuthentication(idToken);
+
+  console.log(user);
+
+  const userAgent = getFormattedUserAgent(req);
+
+  const userSession = await createSessionForUser({
+    userId: user.id,
+    ...userAgent,
+  });
+
+  setSessionIdCookie(reply, userSession._id.toString());
+
+  return reply.success(200, "User logged in successfully", user);
+};
+
 export {
   createUserHandler,
   loginUserHandler,
@@ -355,4 +383,5 @@ export {
   forgotPasswordHandler,
   verifyResetPasswordHandler,
   resetPasswordHandler,
+  handleGoogleLoginHandler,
 };

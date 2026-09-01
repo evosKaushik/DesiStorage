@@ -8,6 +8,7 @@ import { sendEmail } from "../utils/email.js";
 import Session from "../models/session.model.js";
 import { isValidObjectId } from "mongoose";
 import {
+  DEFAULT_AVATAR,
   MAX_SESSIONS,
   RESET_PASSWORD_TTL_SECONDS,
 } from "../constants/constant.js";
@@ -21,6 +22,7 @@ import { ENV } from "../config/env.js";
 import { redisClient } from "../config/redis.js";
 import { revokeAllOtherSessions } from "../utils/session.js";
 import { passwordResetRedisKey } from "../utils/cacheKeys.js";
+import { verifyIdToken } from "../utils/googleAuth.js";
 
 const PASSWORD_RESET_COOLDOWN_TTL_SECONDS = RESET_PASSWORD_TTL_SECONDS;
 
@@ -35,6 +37,7 @@ const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
     fullName,
     email,
     password,
+    authProviders: ["local"],
   });
 
   return newUser;
@@ -67,6 +70,8 @@ const loginUser = async ({ email, password }: LoginUserBody) => {
     fullName: user.fullName,
     email: user.email,
     isEmailVerified: user.isEmailVerified,
+    authProviders: user.authProviders,
+    avatar: user.avatar,
     storageLimit: user.storageLimit,
     storageUsed: user.storageUsed,
   };
@@ -415,7 +420,9 @@ const forgotPassword = async (email: string) => {
   }
 };
 
-const resolveResetToken = async (token: string): Promise<{ userId: string }> => {
+const resolveResetToken = async (
+  token: string,
+): Promise<{ userId: string }> => {
   let payload: { userId: string; random: string };
 
   try {
@@ -451,17 +458,59 @@ const resetPassword = async (token: string, newPassword: string) => {
   if (!user) {
     throw new ApiError(400, "Invalid or expired password reset link.");
   }
-  
+
   const isSamePassword = await user.comparePassword(newPassword);
-  
+
   if (isSamePassword) {
-    throw new ApiError(400, "New password must be different from the old password");
+    throw new ApiError(
+      400,
+      "New password must be different from the old password",
+    );
   }
 
   user.password = newPassword;
   await user.save();
 
   await revokeAllOtherSessions(userId);
+};
+
+const googleAuthentication = async (idToken: string) => {
+  const userData = await verifyIdToken(idToken);
+
+  if (!userData) {
+    throw new ApiError(401, "Invalid Google ID token");
+  }
+
+  const { name, email, picture } = userData;
+
+  if (!email) {
+    throw new ApiError(401, "Google account email is missing");
+  }
+
+  let user = await User.findOne({ email }).lean();
+
+  if (!user) {
+    if (!name) {
+      throw new ApiError(400, "Google account name is missing");
+    }
+
+    user = await User.create({
+      fullName: name,
+      email,
+      avatar: picture ?? DEFAULT_AVATAR,
+      authProviders: ["google"],
+    });
+  }
+  return {
+    id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    isEmailVerified: user.isEmailVerified,
+    authProviders: user.authProviders,
+    avatar: user.avatar,
+    storageLimit: user.storageLimit,
+    storageUsed: user.storageUsed,
+  };
 };
 
 export {
@@ -472,4 +521,5 @@ export {
   forgotPassword,
   verifyResetPasswordToken,
   resetPassword,
+  googleAuthentication,
 };
