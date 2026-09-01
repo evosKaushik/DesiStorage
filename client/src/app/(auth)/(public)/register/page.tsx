@@ -100,7 +100,7 @@ const RegisterPage = () => {
       }
     >
       <div className="space-y-6">
-        <SocialAuthButtons label="Sign up with" />
+        <SocialAuthButtons />
 
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
