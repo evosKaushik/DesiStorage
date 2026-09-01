@@ -14,8 +14,8 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import {
   AuthLayout,
-  SocialAuthButtons,
 } from "@/features/auth/components/AuthLayout";
+import { SocialAuthButtons } from "@/features/auth/components/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

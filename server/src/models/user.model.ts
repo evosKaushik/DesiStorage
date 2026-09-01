@@ -10,6 +10,7 @@ export interface IUser {
   email: string;
   password: string | null;
   avatar: string;
+  googleId?: string | null;
   authProviders: AuthProvider[];
   storageLimit: number;
   storageUsed: number;
@@ -34,8 +35,8 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
       minlength: [2, "Full name must be at least 2 characters"],
       maxlength: [100, "Full name cannot exceed 100 characters"],
       match: [
-        /^[A-Za-z]+(?: [A-Za-z]+)*$/,
-        "Only letters and spaces are allowed",
+        /^[\p{L}\p{M}'.-]+(?: [\p{L}\p{M}'.-]+)*$/u,
+        "Only letters, spaces, hyphens, dots and apostrophes are allowed",
       ],
     },
 
@@ -91,6 +92,15 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
     avatar: {
       type: String,
       default: DEFAULT_AVATAR,
+    },
+
+    // Stable Google account id (sub claim) — identity link independent of
+    // the user's email, so local ↔ google merges never collide.
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
     },
 
     // User total Storage

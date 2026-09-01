@@ -12,7 +12,7 @@ import { AuthLayout } from "@/features/auth/components/AuthLayout";
 import Link from "next/link";
 
 import { useRouter } from "next/navigation";
-import { showToastWithDescription } from "@/utils/toast";
+import { showToastWithDescription } from "@/components/ShowToastWithDescription";
 import useUserStore, { selectUserEmail } from "@/store/useUserStore";
 import { verifyEmailApi, sendOtpToEmailApi } from "@/features/auth/api";
 import { zodResolver } from "@hookform/resolvers/zod";

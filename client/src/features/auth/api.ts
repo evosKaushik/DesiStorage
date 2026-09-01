@@ -10,11 +10,14 @@ import { apiRequest, type ApiResult } from "@/utils/api";
 
 /** User object returned by POST /auth/register.
  *  NOTE: register does NOT return `isEmailVerified`. */
+export type AuthProvider = "local" | "google";
+
 export interface RegisteredUser {
   id: string;
   fullName: string;
   email: string;
-  avatar: string | null;
+  avatar: string;
+  authProviders: AuthProvider[];
   storageLimit: number;
   storageUsed: number;
 }
@@ -25,6 +28,8 @@ export interface LoginUser {
   id: string;
   fullName: string;
   email: string;
+  avatar: string;
+  authProviders: AuthProvider[];
   isEmailVerified: boolean;
   storageLimit: number;
   storageUsed: number;
@@ -88,6 +93,12 @@ const sendOtpToEmailApi = () => apiRequest<null>("POST", "/auth/send-email");
 const verifyEmailApi = (payload: VerifyEmailSchema) =>
   apiRequest<null>("POST", "/auth/verify-email", payload);
 
+// Google Login
+const googleAuthenticationApi = (payload: {
+  idToken: string;
+  clientId: string;
+}) => apiRequest<LoginUser>("POST", "/auth/google", payload);
+
 export {
   registerUserApi,
   loginUserApi,
@@ -96,5 +107,6 @@ export {
   changePasswordApi,
   sendOtpToEmailApi,
   verifyEmailApi,
+  googleAuthenticationApi
 };
 export type { ApiResult };

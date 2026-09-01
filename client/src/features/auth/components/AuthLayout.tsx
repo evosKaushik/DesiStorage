@@ -2,8 +2,6 @@ import type { ReactNode } from "react";
 import { ShieldCheck, Zap, Globe2, Quote } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "../../../components/ui/button";
-import { GoogleLogin } from "@react-oauth/google";
 
 const HIGHLIGHTS = [
   {
@@ -134,34 +132,5 @@ export function AuthLayout({
         </div>
       </div>
     </div>
-  );
-}
-
-export function SocialAuthButtons() {
-  return (
-    <button
-      aria-label="google login button"
-      className="w-full flex justify-center"
-    >
-      <div className="shadow-md shadow-accent-foreground/50 rounded-full">
-      <div className="rounded-full overflow-hidden">
-        <GoogleLogin
-          onSuccess={(credentialResponse) => {
-            console.log(credentialResponse);
-          }}
-          onError={() => {
-            console.log("Login Failed");
-          }}
-          theme="outline"
-          size="large"
-          text="continue_with"
-          shape="pill"
-          width="240"
-          ux_mode="popup"
-          useOneTap
-        />
-        </div>
-      </div>
-    </button>
   );
 }

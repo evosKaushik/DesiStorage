@@ -28,6 +28,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import { logoutUserApi } from "@/features/auth/api";
+import Image from "next/image";
+import { ShimmerImage } from "@/components/ShimmerImage";
 
 function getInitials(name: string) {
   return name
@@ -69,17 +71,27 @@ export function ProfileMenu() {
         className="flex items-center rounded-full outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         aria-label="Open profile menu"
       >
-        <Avatar className="h-9 w-9 border border-border/60">
+        <Avatar className="h-9 w-9 border border-border/60 rounded-full overflow-hidden">
           <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-            {initials}
+            <ShimmerImage
+              src={user?.avatar ?? "/default-avatar.png"}
+              alt="User avatar"
+              fill
+              className="object-cover"
+            />
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 p-0">
         <div className="flex items-center gap-3 border-b border-border/60 p-3">
-          <Avatar className="h-11 w-11">
+          <Avatar className="h-11 w-11 rounded-full overflow-hidden">
             <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-              {initials}
+              <ShimmerImage
+                src={user?.avatar ?? "/default-avatar.png"}
+                alt="User avatar"
+                fill
+                className="object-cover"
+              />
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -116,7 +128,10 @@ export function ProfileMenu() {
             Account
           </DropdownMenuLabel>
           <DropdownMenuItem>
-            <Link href="/profile" className="cursor-pointer flex items-center gap-2">
+            <Link
+              href="/profile"
+              className="cursor-pointer flex items-center gap-2"
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
@@ -138,7 +153,10 @@ export function ProfileMenu() {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <Link href="/profile" className="cursor-pointer flex items-center gap-2">
+          <Link
+            href="/profile"
+            className="cursor-pointer flex items-center gap-2"
+          >
             <LifeBuoy className="mr-2 h-4 w-4" />
             <span>Help & support</span>
           </Link>

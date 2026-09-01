@@ -6,7 +6,7 @@ import { TriangleAlertIcon, ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { sendOtpToEmailApi } from "../api";
 import { useRouter } from "next/navigation";
-import { showToastWithDescription } from "@/utils/toast";
+import { showToastWithDescription } from "@/components/ShowToastWithDescription";
 
 const VerifyEmailBanner = () => {
   const router = useRouter();

@@ -25,7 +25,7 @@ import { redisClient } from "../config/redis.js";
 import User from "../models/user.model.js";
 import Session from "../models/session.model.js";
 import { generateOTP } from "../utils/generateOTP.js";
-import { OTP_TTL_SECONDS } from "../constants/constant.js";
+import { OTP_TTL_SECONDS, MAX_SESSIONS } from "../constants/constant.js";
 import {
   createSessionForUser,
   getSessionsByUserId,
@@ -353,9 +353,22 @@ const handleGoogleLoginHandler = async (
     return reply.error(400, "Invalid Google Client ID");
   }
 
+  const existingSessionId = resolveOptionalSessionId(req);
+
+  if (existingSessionId) {
+    throw new ApiError(400, "You are already logged in");
+  }
+
   const user = await googleAuthentication(idToken);
 
-  console.log(user);
+  const sessionCount = await Session.countDocuments({ userId: user.id });
+
+  if (sessionCount >= MAX_SESSIONS) {
+    throw new ApiError(
+      429,
+      `You have reached the maximum of ${MAX_SESSIONS} active sessions. Please log out of an existing device first.`,
+    );
+  }
 
   const userAgent = getFormattedUserAgent(req);
 

@@ -13,6 +13,7 @@ import useUserStore, {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
+import { useGoogleAuthentication } from "@/hooks/useGoogleAuthentication";
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -21,15 +22,12 @@ const LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 export function SiteNav() {
-  
+  const { onSuccess, onError } = useGoogleAuthentication();
+
   useGoogleOneTapLogin({
-  onSuccess: credentialResponse => {
-    console.log(credentialResponse);
-  },
-  onError: () => {
-    console.log('Login Failed');
-  },
-});
+    onSuccess,
+    onError,
+  });
   // Initialize Auth
   useInitializeAuth();
   const isUserLoggedIn = useUserStore(selectIsLoggedIn);

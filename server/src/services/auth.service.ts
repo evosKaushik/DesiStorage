@@ -474,33 +474,99 @@ const resetPassword = async (token: string, newPassword: string) => {
   await revokeAllOtherSessions(userId);
 };
 
+/**
+ * Normalizes a Google-provided name to a value the User model accepts:
+ * - strips any character that isn't a letter/mark, space, '.', "'" or '-'
+ * - falls back to the email local-part, then to a generic label
+ */
+const sanitizeGoogleName = (
+  rawName: string | undefined,
+  email: string,
+): string => {
+  const clean = (value: string) =>
+    value
+      .replace(/[^\p{L}\p{M}' .-]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 100);
+
+  if (rawName) {
+    const fromName = clean(rawName);
+    if (fromName.length >= 2) return fromName;
+  }
+
+  const fromEmail = clean(email.split("@")[0]?.replace(/[._-]+/g, " ") ?? "");
+  if (fromEmail.length >= 2) return fromEmail;
+
+  return "Google User";
+};
+
 const googleAuthentication = async (idToken: string) => {
-  const userData = await verifyIdToken(idToken);
+  let userData;
+
+  try {
+    userData = await verifyIdToken(idToken);
+  } catch {
+    throw new ApiError(401, "Invalid Google ID token");
+  }
 
   if (!userData) {
     throw new ApiError(401, "Invalid Google ID token");
   }
 
-  const { name, email, picture } = userData;
+  const { sub, name, email, picture } = userData;
+
+  if (!sub) {
+    throw new ApiError(401, "Invalid Google ID token");
+  }
 
   if (!email) {
     throw new ApiError(401, "Google account email is missing");
   }
 
-  let user = await User.findOne({ email }).lean();
+  const fullName = sanitizeGoogleName(name, email);
+
+  let user = await User.findOne().or([{ googleId: sub }, { email }]);
 
   if (!user) {
-    if (!name) {
-      throw new ApiError(400, "Google account name is missing");
-    }
-
     user = await User.create({
-      fullName: name,
+      fullName,
       email,
+      googleId: sub,
       avatar: picture ?? DEFAULT_AVATAR,
       authProviders: ["google"],
     });
+  } else {
+    let needsSave = false;
+
+    // Link the stable Google id (identity-merge by sub, not just email).
+    if (user.googleId !== sub) {
+      user.googleId = sub;
+      needsSave = true;
+    }
+
+    // Mark the account as google-enabled (existing local user).
+    if (!user.authProviders.includes("google")) {
+      user.authProviders.push("google");
+      needsSave = true;
+    }
+
+    // Adopt the Google avatar unless the user set a custom one.
+    if (picture && (!user.avatar || user.avatar === DEFAULT_AVATAR)) {
+      user.avatar = picture;
+      needsSave = true;
+    }
+
+    // Account resolved via googleId but Google email changed — refresh it.
+    if (user.email !== email) {
+      user.email = email;
+      user.fullName = fullName;
+      needsSave = true;
+    }
+
+    if (needsSave) await user.save();
   }
+
   return {
     id: user._id,
     fullName: user.fullName,

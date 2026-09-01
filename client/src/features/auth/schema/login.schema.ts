@@ -19,6 +19,19 @@ export const loginSchema = z.object({
     ),
 });
 
+export const googleLoginSchema = z.object({
+  idToken: z
+    .string()
+    .regex(
+      /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
+      "Invalid Google ID token",
+    ),
+  clientId: z
+    .string()
+    .min(1, "Client ID is required")
+    .endsWith(".apps.googleusercontent.com", "Invalid Google Client ID"),
+});
 
+export type GoogleLoginSchema = z.infer<typeof googleLoginSchema>;
 
 export type LoginSchema = z.infer<typeof loginSchema>;

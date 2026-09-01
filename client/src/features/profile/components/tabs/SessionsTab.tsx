@@ -26,7 +26,7 @@ import type { Sessions } from "../../api";
 import { getTimeAgo } from "@/utils/time";
 import GetIconByDeviceName, { DeviceName } from "../GetIconByDeviceName";
 import { GroupSkeleton } from "@/components/GroupSkeleton";
-import { showToastWithDescription } from "@/utils/toast";
+import { showToastWithDescription } from "@/components/ShowToastWithDescription";
 
 export function SessionsTab() {
   const [sessions, setSessions] = useState<Sessions[] | null>(null);
