@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+logs/
+*.log
+
+# Test-only env (contains fake, not real, secrets)
+.env.test
+
+# local overrides
+.env.local
+.env.test.local
