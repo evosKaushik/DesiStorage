@@ -7,10 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import dynamic from "next/dynamic";
 import { UploadProvider } from "./UploadContext";
-import { UploadPanel } from "./UploadPanel";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+
+const UploadPanel = dynamic(
+  () => import("./UploadPanel").then((m) => m.UploadPanel),
+  { ssr: false },
+);
 
 export type DashboardTab =
   | "home"
@@ -50,7 +55,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <DashboardSidebar />
           </Suspense>
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col  sm:ml-18 md:ml-0">
             <DashboardHeader />
             <main className="min-w-0 flex-1 overflow-y-auto">
               

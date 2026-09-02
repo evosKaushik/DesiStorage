@@ -42,6 +42,7 @@ export function ShimmerImage({
       <Image
         {...props}
         src={src}
+        sizes={props.fill && !props.sizes ? "48px" : props.sizes}
         className={`${className ?? ""} ${
           loading ? "opacity-0" : "opacity-100"
         } transition-opacity duration-200`}

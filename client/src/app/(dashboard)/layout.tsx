@@ -5,9 +5,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 const Layout = ({ children }: { children: ReactNode }) => {
   return (
     <AuthGuard>
-      <DashboardShell>
-        
-        {children}</DashboardShell>
+      <DashboardShell>{children}</DashboardShell>
     </AuthGuard>
   );
 };

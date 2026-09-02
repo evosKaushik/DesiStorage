@@ -1,17 +1,13 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Camera,
-  Check,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, Camera, Check, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import useUserStore, { selectUser } from "@/store/useUserStore";
+import { ShimmerImage } from "@/components/ShimmerImage";
 
 function getInitials(name: string) {
   return name
@@ -25,6 +21,8 @@ function getInitials(name: string) {
 export function ProfileHeader() {
   const user = useUserStore(selectUser);
   if (!user) return null;
+
+  console.log(user);
 
   return (
     <>
@@ -40,9 +38,14 @@ export function ProfileHeader() {
 
       <div className="flex flex-col gap-6 md:flex-row md:items-center">
         <div className="relative">
-          <Avatar className="h-20 w-20 border-2 border-border/60">
+          <Avatar className="h-20 w-20 border-2 border-border/60 rounded-full overflow-hidden">
             <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
-              {getInitials(user.fullName)}
+              <ShimmerImage
+                src={user.avatar ?? ""}
+                fill
+                alt="User avatar"
+                className="object-cover"
+              />
             </AvatarFallback>
           </Avatar>
           <button

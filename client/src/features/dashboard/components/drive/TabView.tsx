@@ -1,4 +1,5 @@
 import { FolderPlus, RotateCcw, Trash2, Folder } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -12,9 +13,14 @@ import { FileRow } from "@/features/dashboard/types/types";
 import type { DashboardTab } from "@/features/dashboard/components/DashboardShell";
 import { TabShell } from "./TabShell";
 import { FilesSection } from "./FilesSection";
-import { HomeTab } from "./HomeTab";
-import { RecentTimeline } from "./RecentTimeline";
-import { SharedLinks } from "./SharedLinks";
+
+const HomeTab = dynamic(() => import("./HomeTab").then((m) => m.HomeTab));
+const RecentTimeline = dynamic(() =>
+  import("./RecentTimeline").then((m) => m.RecentTimeline),
+);
+const SharedLinks = dynamic(() =>
+  import("./SharedLinks").then((m) => m.SharedLinks),
+);
 
 export function TabView({
   tab,

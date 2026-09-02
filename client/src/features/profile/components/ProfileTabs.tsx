@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   User,
   HardDrive,
@@ -11,11 +12,22 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileTab } from "./tabs/ProfileTab";
-import { StorageTab } from "./tabs/StorageTab";
-import { SecurityTab } from "./tabs/SecurityTab";
-import { SessionsTab } from "./tabs/SessionsTab";
-import { NotificationsTab } from "./tabs/NotificationsTab";
-import { SupportTab } from "./tabs/SupportTab";
+
+const StorageTab = dynamic(() =>
+  import("./tabs/StorageTab").then((m) => m.StorageTab),
+);
+const SecurityTab = dynamic(() =>
+  import("./tabs/SecurityTab").then((m) => m.SecurityTab),
+);
+const SessionsTab = dynamic(() =>
+  import("./tabs/SessionsTab").then((m) => m.SessionsTab),
+);
+const NotificationsTab = dynamic(() =>
+  import("./tabs/NotificationsTab").then((m) => m.NotificationsTab),
+);
+const SupportTab = dynamic(() =>
+  import("./tabs/SupportTab").then((m) => m.SupportTab),
+);
 
 const TABS = ["profile", "storage", "security", "sessions", "notifications", "support"] as const;
 type TabValue = (typeof TABS)[number];

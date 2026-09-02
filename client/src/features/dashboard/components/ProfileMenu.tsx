@@ -77,6 +77,7 @@ export function ProfileMenu() {
               src={user?.avatar ?? "/default-avatar.png"}
               alt="User avatar"
               fill
+              sizes=""
               className="object-cover"
             />
           </AvatarFallback>

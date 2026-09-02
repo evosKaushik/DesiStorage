@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
 import { useGoogleAuthentication } from "@/hooks/useGoogleAuthentication";
+import styles from "./SiteNav.module.css";
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -59,7 +60,7 @@ export function SiteNav() {
             <a
               key={l.href}
               href={l.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground navLinks"
+              className={`rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground ${styles.navLinks}`}
             >
               {l.label}
             </a>

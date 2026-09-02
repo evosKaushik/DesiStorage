@@ -43,6 +43,7 @@ export interface MeUser {
   email: string;
   fullName: string;
   avatar: string | null;
+  authProviders: AuthProvider[];
   storageLimit: number;
   storageUsed: number;
   isEmailVerified: boolean;

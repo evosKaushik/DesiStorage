@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useUploads } from "@/features/dashboard/components/UploadContext";
 import {
@@ -13,8 +14,20 @@ import {
   TRASH_FILES,
 } from "@/features/dashboard/data/dashboard";
 import { TabView } from "@/features/dashboard/components/drive/TabView";
-import { PreviewPane } from "@/features/dashboard/components/drive/PreviewPane";
-import VerifyEmailBanner from "@/features/auth/components/VerifyEmailBanner";
+
+const PreviewPane = dynamic(
+  () =>
+    import("@/features/dashboard/components/drive/PreviewPane").then(
+      (m) => m.PreviewPane,
+    ),
+  { loading: () => <div className="w-80 shrink-0" /> },
+);
+const VerifyEmailBanner = dynamic(
+  () =>
+    import("@/features/auth/components/VerifyEmailBanner").then(
+      (m) => m.default,
+    ),
+);
 
 const VALID_TABS = new Set<DashboardTab>([
   "home",
