@@ -23,6 +23,7 @@ export const loginUserSchema = z.object({
       /[!-/:-@[-`{-~]/,
       "Password must contain at least one special character",
     ),
+  isRememberMe: z.boolean(),
 });
 export const registerUserSchema = loginUserSchema.extend({
   fullName: z

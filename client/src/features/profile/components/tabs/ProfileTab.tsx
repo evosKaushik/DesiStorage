@@ -61,26 +61,16 @@ export function ProfileTab() {
         title="Personal details"
         description="Update how your name and contact info appear across DesiStorage."
       >
-        <form
-          className="grid gap-4 md:grid-cols-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-          }}
-        >
-          <Field label="Full name" defaultValue={user.fullName} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Full name" defaultValue={user.fullName} readOnly />
           <Field
             label="Email address"
             type="email"
             defaultValue={user.email}
             icon={Mail}
+            readOnly
           />
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <Button type="button" variant="ghost">
-              Cancel
-            </Button>
-            <Button type="submit">Save changes</Button>
-          </div>
-        </form>
+        </div>
       </SectionCard>
 
       <div className="my-4" />

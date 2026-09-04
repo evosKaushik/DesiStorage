@@ -19,6 +19,7 @@ export const loginSchema = z.object({
     .transform((email) => email.toLowerCase()),
 
   password: passwordSchema,
+  isRememberMe: z.boolean(),
 });
 
 export const googleLoginSchema = z.object({

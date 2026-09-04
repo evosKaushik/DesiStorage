@@ -22,23 +22,26 @@ const LoginPage = () => {
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isRememberMe, setIsRememberMe] = useState<boolean>(true);
   const setUser = useUserStore((s) => s.setUser);
 
   const {
     register,
     handleSubmit,
     watch,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
+      isRememberMe: true,
     },
   });
 
   const onSubmit = async (data: LoginSchema) => {
-    // Clear any previous server-side error before retrying
     setServerError(null);
 
     const result = await loginUserApi(data);
@@ -51,9 +54,6 @@ const LoginPage = () => {
     }
 
     setUser(result.data);
-
-    // TODO(UI): once the verify screen exists, route unverified users there:
-    // if (!result.data.isEmailVerified) router.push("/verify-email");
 
     // Toast only on the moments that matter — successful sign-in + redirect.
     toast.success(`Welcome back, ${result.data.fullName.split(" ")[0]}!`, {});
@@ -161,10 +161,23 @@ const LoginPage = () => {
 
           {/* Server ignores this for now — session cookie is always 30 days.
               TODO(API): honor "remember me" by shortening cookie Max-Age. */}
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox id="remember" defaultChecked />
-            <span>Keep me signed in for 30 days</span>
-          </label>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox
+              id="remember"
+              checked={watch("isRememberMe")}
+              onClick={() => {
+                setValue("isRememberMe", !getValues("isRememberMe"));
+              }}
+            />
+            <Label
+              htmlFor="remember"
+              onClick={() => {
+                setValue("isRememberMe", !getValues("isRememberMe"));
+              }}
+            >
+              Keep me signed in for 30 days
+            </Label>
+          </div>
           {serverError && (
             <div
               role="alert"

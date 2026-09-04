@@ -547,6 +547,7 @@ const googleAuthentication = async (idToken: string) => {
       googleId: sub,
       avatar: picture ?? DEFAULT_AVATAR,
       authProviders: ["google"],
+      isEmailVerified: true,
     });
   } else {
     let needsSave = false;
@@ -554,6 +555,11 @@ const googleAuthentication = async (idToken: string) => {
     // Link the stable Google id (identity-merge by sub, not just email).
     if (user.googleId !== sub) {
       user.googleId = sub;
+      needsSave = true;
+    }
+
+    if (!user.isEmailVerified) {
+      user.isEmailVerified = true;
       needsSave = true;
     }
 

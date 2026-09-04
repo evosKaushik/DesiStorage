@@ -75,12 +75,23 @@ const loginUserHandler = async (
 
   const userAgent = getFormattedUserAgent(req);
 
-  const userSession = await createSessionForUser({
-    userId: user.id,
-    ...userAgent,
-  });
+  if (req.body.isRememberMe) {
+    const userSession = await createSessionForUser({
+      userId: user.id,
+      ...userAgent,
+    });
 
-  setSessionIdCookie(reply, userSession._id.toString());
+    setSessionIdCookie(reply, userSession._id.toString());
+  }else{
+    // Todo: Set the session in sessionStorage  
+    const userSession = await createSessionForUser({
+      userId: user.id,
+      ...userAgent,
+    });
+
+    setSessionIdCookie(reply, userSession._id.toString(), 12 * 60 * 60);
+
+  }
 
   return reply.success(200, "User logged in successfully", user);
 };

@@ -9,10 +9,14 @@ const COOKIE_OPTIONS = {
   signed: true,
 };
 
-const setSessionIdCookie = (reply: FastifyReply, token: string) => {
+const setSessionIdCookie = (
+  reply: FastifyReply,
+  token: string,
+  maxAge?: number,
+) => {
   reply.setCookie("sid", token, {
     ...COOKIE_OPTIONS,
-    maxAge: 30 * 24 * 60 * 60, // 30 Days
+    maxAge: maxAge ? maxAge : 30 * 24 * 60 * 60, // 30 Days
   });
 };
 

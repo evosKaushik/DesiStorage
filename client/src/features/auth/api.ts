@@ -64,7 +64,7 @@ const registerUserApi = (payload: RegisterSchema) =>
  * which axios stores automatically (`withCredentials: true`).
  */
 const loginUserApi = (payload: LoginSchema) =>
-  apiRequest<LoginUser>("POST", "/auth/login", payload);
+  apiRequest<LoginUser>("POST", `/auth/login`, payload);
 
 /**
  * Fetches the currently authenticated user from an existing session cookie.
@@ -116,6 +116,8 @@ const resetPasswordApi = ({
   token: string;
   newPassword: string;
 }) => apiRequest<null>("POST", "/auth/reset-password", { token, newPassword });
+
+
 export {
   registerUserApi,
   loginUserApi,
