@@ -1,9 +1,11 @@
-import { Mail } from "lucide-react";
+import { Mail, Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "../Field";
 import { SectionCard } from "../SectionCard";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import type { AuthProvider } from "@/features/auth/api";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const PROVIDERS: {
   key: AuthProvider;
@@ -15,7 +17,6 @@ const PROVIDERS: {
     key: "local",
     label: "Email & Password",
     description: "Sign in with your email and password.",
-    alwaysConnected: true,
   },
   {
     key: "google",
@@ -27,11 +28,7 @@ const PROVIDERS: {
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
         fill="#4285F4"
@@ -94,33 +91,59 @@ export function ProfileTab() {
       >
         <div className="divide-y rounded-xl border">
           {PROVIDERS.map((provider) => {
-            const isConnected =
-              provider.alwaysConnected || connectedProviders.has(provider.key);
-            const Icon =
-              provider.key === "google" ? GoogleIcon : undefined;
+            console.log(provider);
+            const isConnected = connectedProviders.has(provider.key);
+
+            const Icon = provider.key === "google" ? GoogleIcon : undefined;
 
             return (
               <div
                 key={provider.key}
-                className="flex items-center gap-3 px-4 py-3"
-              >
-                {Icon ? (
-                  <Icon className="h-5 w-5 shrink-0" />
-                ) : (
-                  <Mail className="h-5 w-5 shrink-0 text-muted-foreground" />
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 transition-colors",
+                  isConnected &&
+                    "bg-emerald-50/70 dark:bg-emerald-500/5 ring-1 ring-inset ring-emerald-500/20",
                 )}
+              >
+                <div className="relative shrink-0">
+                  {Icon ? (
+                    <Icon className="h-5 w-5" />
+                  ) : (
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  {isConnected && (
+                    <span className="absolute -right-1.5 -bottom-1  h-4 w-4  rounded-full bg-emerald-500 text-white shadow-sm flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                    </span>
+                  )}
+                </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{provider.label}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{provider.label}</p>
+                    {isConnected && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <ShieldCheck className="h-3 w-3" />
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {provider.description}
                   </p>
                 </div>
 
                 {isConnected ? (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                    {provider.alwaysConnected ? "Primary" : "Connected"}
-                  </span>
+                  <Badge
+                    className={cn(
+                      "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                      provider.alwaysConnected
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30",
+                    )}
+                  >
+                    Connected
+                  </Badge>
                 ) : (
                   <Button variant="outline" size="sm">
                     Connect

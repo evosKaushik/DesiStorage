@@ -45,8 +45,6 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
       type: [String],
       enum: ["local", "google"],
       required: [true, "Authentication provider is required"],
-      // note: the previous `validator:` key was a no-op; mongoose only honors
-      // `validate` for arrays. Without it, ["local","local"] would slip through.
       validate: {
         validator: (providers: string[]) =>
           providers.length > 0 && new Set(providers).size === providers.length,

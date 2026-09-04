@@ -15,3 +15,6 @@ export const getUserProfileCacheKey = (userId: string): string =>
 
 export const passwordResetRedisKey = (random: string): string =>
   `password-reset:${createHmacHash(random, ENV.RESET_PASSWORD_SECRET)}`;
+
+export const passwordResetCooldownKey = (userId: string): string =>
+  `password-reset:cooldown:${userId}`;

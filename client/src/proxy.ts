@@ -14,7 +14,7 @@ const PROTECTED_PATHS = ["/dashboard", "/profile", "/verify-email"];
  * so the client-side AuthGuard/AuthRedirectGuard re-validate against GET /auth
  * as the second layer.
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = req.cookies.has(SESSION_COOKIE);
 

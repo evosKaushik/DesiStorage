@@ -19,7 +19,6 @@ export function SocialAuthButtons() {
             shape="pill"
             width="240"
             ux_mode="popup"
-            useOneTap
           />
         </div>
       </div>

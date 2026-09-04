@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "react-toastify";
-import {
-  AuthLayout,
-} from "@/features/auth/components/AuthLayout";
+import { AuthLayout } from "@/features/auth/components/AuthLayout";
 import { SocialAuthButtons } from "@/features/auth/components/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +27,7 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -61,6 +60,8 @@ const LoginPage = () => {
     router.push("/dashboard");
   };
 
+  const email = watch("email");
+
   return (
     <AuthLayout
       eyebrow="Welcome back"
@@ -79,7 +80,7 @@ const LoginPage = () => {
       }
     >
       <div className="space-y-6">
-        <SocialAuthButtons  />
+        <SocialAuthButtons />
 
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
@@ -119,7 +120,7 @@ const LoginPage = () => {
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               <Link
-                href="/forgot-password"
+                href={`/forgot-password?email=${encodeURIComponent(email)}`}
                 className="text-xs font-medium text-primary hover:underline"
               >
                 Forgot password?

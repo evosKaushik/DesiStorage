@@ -222,7 +222,7 @@ describe("auth.service", () => {
       await verifyResetPasswordToken(token);
     });
 
-    it("rejects tampered tokens and consumed tokens", async () => {
+    it("rejects tampered tokens and does not consume tokens on verify", async () => {
       const user = await createUser(testUser);
       const token = await seedResetToken(user._id.toString());
 
@@ -233,12 +233,10 @@ describe("auth.service", () => {
         (err) => err instanceof ApiError && err.statusCode === 400,
       );
 
+      // Verification is a read-only pre-check: it must NOT consume the token
+      // so the subsequent reset-password step can still validate it.
       await verifyResetPasswordToken(token);
-
-      await assert.rejects(
-        verifyResetPasswordToken(token),
-        (err) => err instanceof ApiError && err.statusCode === 400,
-      );
+      await verifyResetPasswordToken(token);
     });
 
     it("rejects a token whose userId is not an ObjectId", async () => {

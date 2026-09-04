@@ -25,13 +25,6 @@ export function DashboardHeader() {
         />
       </div>
       <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground"
-        >
-          <SlidersHorizontal className="h-4.5 w-4.5" />
-        </Button>
         <ThemeToggler />
         <NotificationsPopover />
         <Link

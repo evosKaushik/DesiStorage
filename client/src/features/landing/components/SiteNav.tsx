@@ -12,9 +12,26 @@ import useUserStore, {
 } from "@/store/useUserStore";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useGoogleOneTapLogin } from "@react-oauth/google";
+import {
+  useGoogleOneTapLogin,
+  useGoogleOAuth,
+  type CredentialResponse,
+} from "@react-oauth/google";
 import { useGoogleAuthentication } from "@/hooks/useGoogleAuthentication";
 import styles from "./SiteNav.module.css";
+
+
+function OneTapLogin({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (credentialResponse: CredentialResponse) => void;
+  onError: () => void;
+}) {
+  useGoogleOneTapLogin({ onSuccess, onError });
+  return null;
+}
+
 const LINKS = [
   { href: "#features", label: "Features" },
   { href: "#demo", label: "Demo" },
@@ -25,16 +42,15 @@ const LINKS = [
 export function SiteNav() {
   const { onSuccess, onError } = useGoogleAuthentication();
 
-  useGoogleOneTapLogin({
-    onSuccess,
-    onError,
-  });
   // Initialize Auth
   useInitializeAuth();
   const isUserLoggedIn = useUserStore(selectIsLoggedIn);
   const hydrated = useUserStore(selectHydrated);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const { clientId } = useGoogleOAuth();
+  const canUseOneTap = Boolean(clientId) && hydrated && !isUserLoggedIn;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -44,8 +60,10 @@ export function SiteNav() {
   }, []);
 
   return (
-    <header
-      className={cn(
+    <>
+      {canUseOneTap && <OneTapLogin onSuccess={onSuccess} onError={onError} />}
+      <header
+        className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
         scrolled
           ? "border-b border-border/60 bg-background/80 backdrop-blur-xl"
@@ -105,6 +123,7 @@ export function SiteNav() {
         hydrated={hydrated}
         isUserLoggedIn={isUserLoggedIn}
       />
-    </header>
+      </header>
+    </>
   );
 }

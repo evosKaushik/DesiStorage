@@ -2,6 +2,8 @@
  * Shared fixtures + builders for test payloads.
  */
 
+import { auth } from "google-auth-library";
+
 export const VALID_PASSWORD = "StrongPass1!";
 export const VALID_PASSWORD_2 = "AnotherPass2!";
 
@@ -9,6 +11,7 @@ export const testUser = {
   fullName: "Rohan Sharma",
   email: "rohan.sharma@example.com",
   password: VALID_PASSWORD,
+  authProviders: ["local"] as const,
 };
 
 export const registerPayload = (overrides: Partial<typeof testUser> = {}) => ({

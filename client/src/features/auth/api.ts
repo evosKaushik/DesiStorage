@@ -100,6 +100,22 @@ const googleAuthenticationApi = (payload: {
   clientId: string;
 }) => apiRequest<LoginUser>("POST", "/auth/google", payload);
 
+const forgotPasswordApi = ({ email }: { email: string }) =>
+  apiRequest<null>("POST", `/auth/forgot-password/${email}`);
+
+const verifyResetTokenApi = ({ token }: { token: string }) =>
+  apiRequest<null>(
+    "GET",
+    `/auth/verify-reset-token?token=${encodeURIComponent(token)}`,
+  );
+
+const resetPasswordApi = ({
+  token,
+  newPassword,
+}: {
+  token: string;
+  newPassword: string;
+}) => apiRequest<null>("POST", "/auth/reset-password", { token, newPassword });
 export {
   registerUserApi,
   loginUserApi,
@@ -108,6 +124,9 @@ export {
   changePasswordApi,
   sendOtpToEmailApi,
   verifyEmailApi,
-  googleAuthenticationApi
+  googleAuthenticationApi,
+  forgotPasswordApi,
+  verifyResetTokenApi,
+  resetPasswordApi,
 };
 export type { ApiResult };

@@ -7,6 +7,7 @@ import type { CredentialResponse } from "@react-oauth/google";
 import { googleAuthenticationApi } from "@/features/auth/api";
 import { showToastWithDescription } from "@/components/ShowToastWithDescription";
 import useUserStore from "@/store/useUserStore";
+import { ENV } from "@/lib/env";
 
 /**
  * Reusable Google OAuth handlers. Works with both the popup <GoogleLogin>
@@ -22,7 +23,10 @@ export function useGoogleAuthentication() {
 
   const onSuccess = useCallback(
     async (credentialResponse: CredentialResponse) => {
-      const { credential, clientId } = credentialResponse;
+      console.log(credentialResponse)
+      let { credential, clientId } = credentialResponse;
+
+      clientId = clientId ?? ENV.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
       if (!credential || !clientId) {
         showToastWithDescription.error({

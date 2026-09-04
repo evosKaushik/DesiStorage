@@ -1,6 +1,14 @@
 import "../setup/env.js";
 
-import { after, before, beforeEach, describe, it, type SuiteContext, type TestContext } from "node:test";
+import {
+  after,
+  before,
+  beforeEach,
+  describe,
+  it,
+  type SuiteContext,
+  type TestContext,
+} from "node:test";
 import assert from "node:assert/strict";
 import type { FastifyInstance } from "fastify";
 import User from "../../src/models/user.model.js";
@@ -16,11 +24,7 @@ import {
 import { connectTestDb, closeTestDb, resetTestDb } from "../setup/db.js";
 import { fakeRedis, mockRedis, resetRedis } from "../setup/redis.js";
 import { mockSendEmail, resetEmailCalls } from "../setup/email.js";
-import {
-  loginPayload,
-  registerPayload,
-  testUser,
-} from "../setup/fixtures.js";
+import { loginPayload, registerPayload, testUser } from "../setup/fixtures.js";
 
 const AUTH = "/api/v1/auth";
 
@@ -60,7 +64,10 @@ describe("POST /api/v1/auth/register", () => {
     assert.equal(typeof body.data.avatar, "string");
     assert.equal(body.data.storageLimit, 15 * 1024 * 1024 * 1024);
     assert.equal(body.data.storageUsed, 0);
-    assert.ok(!JSON.stringify(body).toLowerCase().includes("password"), "password must never be returned");
+    assert.ok(
+      !JSON.stringify(body).toLowerCase().includes("password"),
+      "password must never be returned",
+    );
   });
 
   it("rejects duplicate emails with 409", async () => {
@@ -106,8 +113,14 @@ describe("POST /api/v1/auth/login", () => {
   it("is non-enumerating for bad credentials", async () => {
     await registerUser(app, registerPayload());
 
-    const badPassword = await loginUser(app, { ...loginPayload(), password: "WrongPass1!" });
-    const badEmail = await loginUser(app, { ...loginPayload(), email: "ghost@example.com" });
+    const badPassword = await loginUser(app, {
+      ...loginPayload(),
+      password: "WrongPass1!",
+    });
+    const badEmail = await loginUser(app, {
+      ...loginPayload(),
+      email: "ghost@example.com",
+    });
 
     assert.equal(badPassword.statusCode, 401);
     assert.equal(badEmail.statusCode, 401);
@@ -157,7 +170,9 @@ describe("GET /api/v1/auth/ (me)", () => {
 
     const forged: TestCookie = {
       ...cookies[0]!,
-      value: cookies[0]!.value.slice(0, -1) + (cookies[0]!.value.endsWith("a") ? "b" : "a"),
+      value:
+        cookies[0]!.value.slice(0, -1) +
+        (cookies[0]!.value.endsWith("a") ? "b" : "a"),
     };
 
     const res = await authedInject(app, [forged], { method: "GET", url: AUTH });
@@ -168,15 +183,36 @@ describe("GET /api/v1/auth/ (me)", () => {
   it("returns the current user for a valid session", async () => {
     const { cookies } = await createAuthedAgent(app, testUser);
 
-    const res = await authedInject(app, cookies, { method: "GET", url: AUTH });
+    const res = await authedInject(app, cookies, {
+      method: "GET",
+      url: AUTH,
+    });
 
     assert.equal(res.statusCode, 200);
+
     const body = res.json();
+
+    assert.deepEqual(
+      Object.keys(body.data).sort(),
+      [
+        "id",
+        "email",
+        "fullName",
+        "avatar",
+        "storageLimit",
+        "storageUsed",
+        "isEmailVerified",
+        "authProviders",
+      ].sort(),
+    );
 
     assert.equal(body.data.email, testUser.email);
     assert.equal(body.data.fullName, testUser.fullName);
     assert.equal(body.data.isEmailVerified, false);
     assert.equal(body.data.storageUsed, 0);
+
+    assert.deepEqual(body.data.authProviders, testUser.authProviders);
+
     assert.ok(body.data.id);
   });
 
@@ -188,7 +224,11 @@ describe("GET /api/v1/auth/ (me)", () => {
     const res = await authedInject(app, cookies, { method: "GET", url: AUTH });
 
     assert.equal(res.statusCode, 401);
-    assert.match(String(res.headers["set-cookie"] ?? ""), /sid=/, "clears the sid cookie");
+    assert.match(
+      String(res.headers["set-cookie"] ?? ""),
+      /sid=/,
+      "clears the sid cookie",
+    );
   });
 
   it("returns 401 and revokes the session when the user is deleted", async () => {
@@ -224,8 +264,14 @@ describe("email verification (send-email / verify-email)", () => {
   it("refuses to resend while an OTP is still valid", async () => {
     const { cookies } = await createAuthedAgent(app, testUser);
 
-    await authedInject(app, cookies, { method: "POST", url: `${AUTH}/send-email` });
-    const res = await authedInject(app, cookies, { method: "POST", url: `${AUTH}/send-email` });
+    await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/send-email`,
+    });
+    const res = await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/send-email`,
+    });
 
     assert.equal(res.statusCode, 400);
     assert.equal(res.json().message, "OTP is still valid");
@@ -234,12 +280,15 @@ describe("email verification (send-email / verify-email)", () => {
   it("verifies a valid OTP and persists the flag", async () => {
     const { cookies } = await createAuthedAgent(app, testUser);
 
-    const send = await authedInject(app, cookies, { method: "POST", url: `${AUTH}/send-email` });
+    const send = await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/send-email`,
+    });
     assert.equal(send.statusCode, 200);
 
-    const userId = (
-      await User.findOne({ email: testUser.email }).select("_id").lean()
-    )!._id;
+    const userId = (await User.findOne({ email: testUser.email })
+      .select("_id")
+      .lean())!._id;
     const code = (await fakeRedis.get(`user:${userId}:otp`)) ?? "";
 
     assert.match(code, /^\d{6}$/);
@@ -260,7 +309,10 @@ describe("email verification (send-email / verify-email)", () => {
   it("rejects a wrong OTP", async () => {
     const { cookies } = await createAuthedAgent(app, testUser);
 
-    await authedInject(app, cookies, { method: "POST", url: `${AUTH}/send-email` });
+    await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/send-email`,
+    });
 
     const res = await authedInject(app, cookies, {
       method: "POST",
@@ -282,7 +334,10 @@ describe("email verification (send-email / verify-email)", () => {
     });
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.json().message, "OTP expired or not found, please request a new one");
+    assert.equal(
+      res.json().message,
+      "OTP expired or not found, please request a new one",
+    );
   });
 
   it("rejects an already verified account", async () => {
@@ -290,7 +345,10 @@ describe("email verification (send-email / verify-email)", () => {
 
     await User.updateOne({ email: testUser.email }, { isEmailVerified: true });
 
-    const send = await authedInject(app, cookies, { method: "POST", url: `${AUTH}/send-email` });
+    const send = await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/send-email`,
+    });
     assert.equal(send.statusCode, 400);
     assert.equal(send.json().message, "Your Email is already Verified");
 
@@ -337,7 +395,10 @@ describe("change-password", () => {
     const res = await authedInject(app, cookies, {
       method: "POST",
       url: `${AUTH}/change-password`,
-      payload: { oldPassword: testUser.password, newPassword: testUser.password },
+      payload: {
+        oldPassword: testUser.password,
+        newPassword: testUser.password,
+      },
     });
 
     assert.equal(res.statusCode, 400);
@@ -368,11 +429,18 @@ describe("change-password", () => {
     const oldLogin = await loginUser(app, loginPayload());
     assert.equal(oldLogin.statusCode, 401);
 
-    const newLogin = await loginUser(app, { ...loginPayload(), password: "NewPassword2!" });
+    const newLogin = await loginUser(app, {
+      ...loginPayload(),
+      password: "NewPassword2!",
+    });
     assert.equal(newLogin.statusCode, 200);
 
     const me = await authedInject(app, cookies, { method: "GET", url: AUTH });
-    assert.equal(me.statusCode, 200, "current session stays valid after rotation");
+    assert.equal(
+      me.statusCode,
+      200,
+      "current session stays valid after rotation",
+    );
   });
 
   it("requires authentication", async () => {
@@ -391,7 +459,10 @@ describe("sessions", () => {
     const { cookies } = await createAuthedAgent(app, testUser);
     await loginUser(app, loginPayload());
 
-    const res = await authedInject(app, cookies, { method: "GET", url: `${AUTH}/sessions` });
+    const res = await authedInject(app, cookies, {
+      method: "GET",
+      url: `${AUTH}/sessions`,
+    });
 
     assert.equal(res.statusCode, 200);
 
@@ -414,7 +485,9 @@ describe("sessions", () => {
     });
     const otherUserId = other.registerRes.json().data.id as string;
 
-    const otherSession = (await Session.findOne({ userId: otherUserId }).lean())!;
+    const otherSession = (await Session.findOne({
+      userId: otherUserId,
+    }).lean())!;
     const res = await authedInject(app, cookies, {
       method: "POST",
       url: `${AUTH}/logout/${otherSession._id.toString()}`,
@@ -438,7 +511,10 @@ describe("sessions", () => {
   it("logout revokes the current session and clears the cookie", async () => {
     const { cookies } = await createAuthedAgent(app, testUser);
 
-    const res = await authedInject(app, cookies, { method: "POST", url: `${AUTH}/logout` });
+    const res = await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/logout`,
+    });
 
     assert.equal(res.statusCode, 200);
 
@@ -451,7 +527,10 @@ describe("sessions", () => {
     const { cookies } = await createAuthedAgent(app, testUser);
     await loginUser(app, loginPayload());
 
-    const res = await authedInject(app, cookies, { method: "POST", url: `${AUTH}/logout/all` });
+    const res = await authedInject(app, cookies, {
+      method: "POST",
+      url: `${AUTH}/logout/all`,
+    });
 
     assert.equal(res.statusCode, 200);
     assert.equal(await Session.countDocuments({}), 1);

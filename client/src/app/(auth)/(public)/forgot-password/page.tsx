@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-import { ArrowLeft, Loader2, Mail, MailCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { AlertCircle, ArrowLeft, Loader2, Mail, MailCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import Link from "next/link";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { forgotPasswordApi } from "@/features/auth/api";
+import { showToastWithDescription } from "@/components/ShowToastWithDescription";
 
 const emailSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -24,6 +26,10 @@ const ForgotPasswordPage = () => {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
+
+  const email = searchParams.get("email");
+
   const {
     register,
     handleSubmit,
@@ -32,15 +38,66 @@ const ForgotPasswordPage = () => {
   } = useForm<EmailSchema>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
-      email: "",
+      email: email || "",
     },
   });
 
-  const onSubmit = (data: EmailSchema) => {
+  const onSubmit = async (data: EmailSchema) => {
     setLoading(true);
     setError(null);
-    setSent(true);
-    console.log(data);
+    try {
+      const result = await forgotPasswordApi(data);
+      if (!result.success) {
+        const message =
+          result.error.message ||
+          "An error occurred while sending the reset link. Please try again.";
+        setError(message);
+        showToastWithDescription.error({
+          title: "Couldn't send reset link",
+          description: message,
+        });
+        return;
+      }
+      setSent(true);
+      showToastWithDescription.success({
+        title: "Check your inbox",
+        description: result.message,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred while sending the reset link. Please try again.";
+      setError(message);
+      showToastWithDescription.error({
+        title: "Couldn't send reset link",
+        description: message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    setLoading(true);
+    setError(null);
+    const result = await forgotPasswordApi({ email: getValues("email") });
+    setLoading(false);
+    if (!result.success) {
+      const message =
+        result.error.message ||
+        "An error occurred while sending the reset link. Please try again.";
+      setError(message);
+      showToastWithDescription.error({
+        title: "Couldn't resend reset link",
+        description: message,
+      });
+      return;
+    }
+    showToastWithDescription.success({
+      title: "Reset link sent",
+      description: result.message,
+    });
   };
 
   return (
@@ -75,33 +132,42 @@ const ForgotPasswordPage = () => {
                 Reset link sent to {getValues("email")}
               </p>
               <p className="mt-1 text-muted-foreground">
-                Didn&apos;t get it? Check spam, or resend in a moment. Demo
-                inbox — no real email is delivered.
+                Open the email and tap the link to set a new password. The link
+                expires in 30 minutes. Didn&apos;t get it? Check spam, or
+                resend below.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Button
-              variant="outline"
-              className="h-11 rounded-xl"
-              onClick={() => {
-                setSent(false);
-                setError(null);
-              }}
+          {error && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
             >
-              Use another email
-            </Button>
-            <Button className="h-11 rounded-xl shadow-sm">
-              Enter code manually
-            </Button>
-          </div>
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <Button
+            variant="outline"
+            className="h-11 w-full rounded-xl"
+            onClick={() => {
+              setSent(false);
+              setError(null);
+            }}
+          >
+            Use another email
+          </Button>
 
           <button
             type="button"
-            className="w-full text-center text-xs font-medium text-primary hover:underline"
+            onClick={onResend}
+            disabled={loading}
+            className="w-full text-center text-xs font-medium text-primary hover:underline disabled:opacity-60"
           >
-            Resend email
+            {loading ? "Sending…" : "Resend email"}
           </button>
         </div>
       ) : (
@@ -123,16 +189,27 @@ const ForgotPasswordPage = () => {
                 className={`h-11 rounded-xl pl-9 ${errors.email && "input-error-state"}`}
               />
             </div>
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+          {errors.email && (
+            <p className="text-sm text-destructive">{errors.email.message}</p>
+          )}
+        </div>
 
-          <Button
-            type="submit"
-            disabled={!isValid || loading}
-            className="h-11 w-full rounded-xl text-sm shadow-sm"
+        {error && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
           >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          disabled={!isValid || loading}
+          className="h-11 w-full rounded-xl text-sm shadow-sm"
+        >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? "Sending link…" : "Send reset link"}
           </Button>

@@ -128,7 +128,7 @@ describe("verify-reset-token", () => {
     assert.equal(res.json().message, "Password reset token is valid.");
   });
 
-  it("rejects a consumed or tampered token", async () => {
+  it("does not consume the token on verify and rejects a tampered token", async () => {
     const user = await User.create({
       fullName: testUser.fullName,
       email: testUser.email,
@@ -137,17 +137,20 @@ describe("verify-reset-token", () => {
     });
     const token = await seedResetToken(user._id.toString());
 
-    const consumed = await app.inject({
+    // Verification is a read-only pre-check — it must NOT consume the token,
+    // otherwise the subsequent reset-password step (which owns consumption)
+    // would fail with "Invalid or expired password reset link."
+    const verify = await app.inject({
       method: "GET",
       url: `${AUTH}/verify-reset-token?token=${encodeURIComponent(token)}`,
     });
-    assert.equal(consumed.statusCode, 200);
+    assert.equal(verify.statusCode, 200);
 
-    const reused = await app.inject({
+    const again = await app.inject({
       method: "GET",
       url: `${AUTH}/verify-reset-token?token=${encodeURIComponent(token)}`,
     });
-    assert.equal(reused.statusCode, 400);
+    assert.equal(again.statusCode, 200, "verify must be repeatable");
 
     const [payload] = token.split(".");
     const tampered = await app.inject({

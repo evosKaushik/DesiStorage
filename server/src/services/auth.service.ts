@@ -21,7 +21,10 @@ import {
 import { ENV } from "../config/env.js";
 import { redisClient } from "../config/redis.js";
 import { revokeAllOtherSessions } from "../utils/session.js";
-import { passwordResetRedisKey } from "../utils/cacheKeys.js";
+import {
+  passwordResetCooldownKey,
+  passwordResetRedisKey,
+} from "../utils/cacheKeys.js";
 import { verifyIdToken } from "../utils/googleAuth.js";
 
 const PASSWORD_RESET_COOLDOWN_TTL_SECONDS = RESET_PASSWORD_TTL_SECONDS;
@@ -205,7 +208,7 @@ const forgotPassword = async (email: string) => {
 
   const userId = user._id.toString();
 
-  const cooldownKey = `password-reset:cooldown:${userId}`;
+  const cooldownKey = passwordResetCooldownKey(userId);
 
   const cooldownCreated = await redisClient.set(cooldownKey, "1", {
     NX: true,
@@ -422,6 +425,7 @@ const forgotPassword = async (email: string) => {
 
 const resolveResetToken = async (
   token: string,
+  consume: boolean,
 ): Promise<{ userId: string }> => {
   let payload: { userId: string; random: string };
 
@@ -437,7 +441,11 @@ const resolveResetToken = async (
 
   const resetTokenKey = passwordResetRedisKey(payload.random);
 
-  const storedUserId = await redisClient.getDel(resetTokenKey);
+  // Verification must NOT consume the token (so the subsequent reset-password
+  // step can still validate it). Only the final reset step deletes the key.
+  const storedUserId = consume
+    ? await redisClient.getDel(resetTokenKey)
+    : await redisClient.get(resetTokenKey);
 
   if (!storedUserId || storedUserId !== payload.userId) {
     throw new ApiError(400, "Invalid or expired password reset link.");
@@ -447,11 +455,11 @@ const resolveResetToken = async (
 };
 
 const verifyResetPasswordToken = async (token: string): Promise<void> => {
-  await resolveResetToken(token);
+  await resolveResetToken(token, false);
 };
 
 const resetPassword = async (token: string, newPassword: string) => {
-  const { userId } = await resolveResetToken(token);
+  const { userId } = await resolveResetToken(token, true);
 
   const user = await User.findById(userId).select("+password");
 
@@ -472,6 +480,10 @@ const resetPassword = async (token: string, newPassword: string) => {
   await user.save();
 
   await revokeAllOtherSessions(userId);
+
+  // Clear the resend cooldown now that the password has been reset, so the
+  // user isn't blocked from requesting another reset in a genuine emergency.
+  await redisClient.del(passwordResetCooldownKey(userId));
 };
 
 /**

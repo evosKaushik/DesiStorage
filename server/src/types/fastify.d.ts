@@ -1,5 +1,6 @@
 import "fastify";
 import type { ObjectId } from "mongoose";
+import type { AuthProvider } from "../models/user.model.ts";
 
 declare module "fastify" {
   interface FastifyReply {
@@ -17,6 +18,7 @@ export interface AuthUser {
   storageLimit: number;
   storageUsed: number;
   isEmailVerified: boolean;
+  authProviders: AuthProvider[];
 }
 
 declare module "fastify" {

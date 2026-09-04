@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import RouteProgress from "@/components/RouteProgress";
 import ToastProvider from "@/components/ToastProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ENV } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "DesiStorage",
@@ -13,7 +14,9 @@ export const metadata: Metadata = {
 };
 
 // Google Client ID
-const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
+const clientId = ENV.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+
 
 export default function RootLayout({
   children,
