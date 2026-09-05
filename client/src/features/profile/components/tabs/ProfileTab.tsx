@@ -51,6 +51,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export function ProfileTab() {
   const user = useUserStore(selectUser);
+
   if (!user) return null;
 
   const connectedProviders = new Set(user.authProviders ?? []);

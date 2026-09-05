@@ -21,6 +21,7 @@ import Logo from "@/components/Logo";
 import type { DashboardTab } from "./DashboardShell";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import UseStorageDetails from "@/hooks/useStorageDetails";
+import useFileSelectorFromDisk from "@/hooks/useFileSelectorFromDisk";
 
 const NAV: {
   id: DashboardTab;
@@ -39,7 +40,11 @@ const NAV: {
 
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { openPicker } = useUploads();
+  // const { openPicker } = useUploads();
+  const { openPicker } = useFileSelectorFromDisk({
+    isSelectMultipleFiles: true,
+    onlyImagePreview: false
+  });
   const user = useUserStore(selectUser);
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
@@ -59,9 +64,7 @@ export function DashboardSidebar() {
       <aside
         className={cn(
           "hidden shrink-0 flex-col border-r   border-border/60 bg-card/40 backdrop-blur-lg transition-all duration-300 sm:flex max-md:absolute max-md:z-99 max-md:left-0 max-md:bottom-0 max-md:top-0",
-          collapsed
-            ? "w-[72px] "
-            : "w-[260px]",
+          collapsed ? "w-[72px] " : "w-[260px]",
         )}
       >
         <div className="flex h-16 items-center gap-2 px-4">

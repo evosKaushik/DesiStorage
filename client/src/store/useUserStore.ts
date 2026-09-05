@@ -50,11 +50,7 @@ const useUserStore = create<UserState>()(
 
     setUser: (user) =>
       set((draft) => {
-        if ("avatar" in user) {
-          draft.user = user;
-        } else {
-          draft.user = user;
-        }
+        draft.user = user;
       }),
 
     setHydrated: () =>

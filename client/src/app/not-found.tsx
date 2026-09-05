@@ -1,9 +1,13 @@
 "use client";
 
-import { SiteNav } from "@/features/landing/components/SiteNav";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileQuestion, Home, Search } from "lucide-react";
 import Link from "next/link";
+
+const SiteNav = dynamic(() =>
+  import("@/features/landing/components/SiteNav").then((m) => m.SiteNav),
+);
 
 const NotFound = () => {
   return (

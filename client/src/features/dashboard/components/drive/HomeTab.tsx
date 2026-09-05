@@ -2,8 +2,9 @@ import { Home, HardDrive, TrendingUp, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FileCard } from "./FileCard";
-import { FILES } from "@/features/dashboard/data/dashboard";
 import useUserStore, { selectUser } from "@/store/useUserStore";
+import { useShallow } from "zustand/react/shallow";
+import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
 import UseStorageDetails from "@/hooks/useStorageDetails";
 
 export function HomeTab({
@@ -12,10 +13,11 @@ export function HomeTab({
   setSelected: (id: string | null) => void;
 }) {
   const user = useUserStore(selectUser);
+  const files = useFileSystemStore(useShallow(selectFiles));
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
     UseStorageDetails(user?.storageUsed, user?.storageLimit);
-  const suggestions = FILES.slice(0, 4);
+  const suggestions = files.slice(0, 4);
   return (
     <>
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
