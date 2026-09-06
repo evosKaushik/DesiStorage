@@ -20,8 +20,6 @@ export default async function Page({ searchParams }: Props) {
     token,
   });
 
-  console.log(result);
-  debugger;
   if (!result.success) {
     redirect("/forgot-password");
   }

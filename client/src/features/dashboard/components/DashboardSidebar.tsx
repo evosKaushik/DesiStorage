@@ -14,14 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useUploads } from "./UploadContext";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
-import type { DashboardTab } from "./DashboardShell";
+import type { DashboardTab } from "../types/dashboard-tabs";
 import useUserStore, { selectUser } from "@/store/useUserStore";
-import UseStorageDetails from "@/hooks/useStorageDetails";
-import useFileSelectorFromDisk from "@/hooks/useFileSelectorFromDisk";
+import { getStorageDetails } from "@/hooks/useStorageDetails";
+import { useFileSystemUploads } from "@/hooks/useFileSystemUploads";
 
 const NAV: {
   id: DashboardTab;
@@ -40,15 +39,11 @@ const NAV: {
 
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  // const { openPicker } = useUploads();
-  const { openPicker } = useFileSelectorFromDisk({
-    isSelectMultipleFiles: true,
-    onlyImagePreview: false
-  });
+  const { openPicker } = useFileSystemUploads();
   const user = useUserStore(selectUser);
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
-    UseStorageDetails(user?.storageUsed, user?.storageLimit);
+    getStorageDetails(user?.storageUsed, user?.storageLimit);
 
   const pathname = usePathname();
   const params = useSearchParams();

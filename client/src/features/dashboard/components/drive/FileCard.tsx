@@ -12,10 +12,11 @@ import type { FileItem } from "@/store/useFileSystemStore";
 import {
   FILE_ICONS,
   colorFor,
-  formatBytes,
   kindFromMimeType,
 } from "./file-meta";
+import { formatBytes } from "@/lib/format";
 import FileItemContextMenu from "../FileItemContextMenu";
+import { FilePreview } from "./FilePreview";
 
 export function FileCard({
   file,
@@ -30,6 +31,9 @@ export function FileCard({
 }) {
   const kind = kindFromMimeType(file.mimeType);
   const Icon = FILE_ICONS[kind];
+  const showMediaPreview =
+    file.url !== undefined &&
+    (file.previewType === "image" || file.previewType === "video");
 
   if (layout === "row") {
     return (
@@ -44,11 +48,15 @@ export function FileCard({
         <div className="flex min-w-0 items-center gap-3">
           <div
             className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+              "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg",
               colorFor(kind),
             )}
           >
-            <Icon className="h-4 w-4" />
+            <FilePreview
+              url={showMediaPreview ? file.url : undefined}
+              previewType={file.previewType}
+            />
+            {!showMediaPreview && <Icon className="h-4 w-4" />}
           </div>
           <span className="truncate font-medium">{file.name}</span>
         </div>
@@ -59,7 +67,7 @@ export function FileCard({
           {formatBytes(file.size)}
         </div>
 
-        <FileItemContextMenu />
+        <FileItemContextMenu selectedItemId={file.id} selectedItemName={file.name} />
       </article>
     );
   }
@@ -83,15 +91,21 @@ export function FileCard({
         onClick && "cursor-pointer",
       )}
     >
-      <div className="relative flex h-28 items-center justify-center bg-gradient-to-br from-muted/60 to-muted/20">
-        <div
-          className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-xl",
-            colorFor(kind),
-          )}
-        >
-          <Icon className="h-6 w-6" />
-        </div>
+      <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted/60 to-muted/20">
+        <FilePreview
+          url={showMediaPreview ? file.url : undefined}
+          previewType={file.previewType}
+        />
+        {!showMediaPreview && (
+          <div
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-xl",
+              colorFor(kind),
+            )}
+          >
+            <Icon className="h-6 w-6" />
+          </div>
+        )}
       </div>
       <div className="border-t border-border/60 p-3">
         <div className="flex items-start justify-between gap-2">
@@ -102,7 +116,7 @@ export function FileCard({
             </div>
           </div>
           <div className="shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            <FileItemContextMenu />
+            <FileItemContextMenu selectedItemId={file.id} selectedItemName={file.name}/>
           </div>
         </div>
       </div>

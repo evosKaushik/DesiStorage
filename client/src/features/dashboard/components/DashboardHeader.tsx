@@ -8,7 +8,7 @@ import Link from "next/link";
 import { NotificationsPopover } from "./NotificationsPopover";
 import ThemeToggler from "@/components/ThemeToggle";
 import { ProfileMenu } from "./ProfileMenu";
-import { useDashboardSearch } from "./DashboardShell";
+import { useDashboardSearch } from "../context/dashboard-search";
 
 export function DashboardHeader() {
   const { query, setQuery } = useDashboardSearch();

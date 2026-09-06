@@ -3,11 +3,17 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useUploads } from "@/features/dashboard/components/UploadContext";
+import { useShallow } from "zustand/react/shallow";
+import { useFileSystemUploads } from "@/hooks/useFileSystemUploads";
+import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
+import { formatBytes } from "@/lib/format";
+import { useDashboardSearch } from "@/features/dashboard/context/dashboard-search";
 import {
-  useDashboardSearch,
+  VALID_TABS,
   type DashboardTab,
-} from "@/features/dashboard/components/DashboardShell";
+} from "@/features/dashboard/types/dashboard-tabs";
+import type { FileRow } from "@/features/dashboard/types/types";
+import { kindFromMimeType } from "@/features/dashboard/components/drive/file-meta";
 import {
   FILES,
   SHARED_FILES,
@@ -29,21 +35,12 @@ const VerifyEmailBanner = dynamic(
     ),
 );
 
-const VALID_TABS = new Set<DashboardTab>([
-  "home",
-  "my-drive",
-  "shared",
-  "recent",
-  "starred",
-  "links",
-  "trash",
-]);
-
 export default function DashboardPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<string | null>("f2");
   const { query } = useDashboardSearch();
-  const { openPicker } = useUploads();
+  const { openPicker } = useFileSystemUploads();
+  const storeFiles = useFileSystemStore(useShallow(selectFiles));
   const params = useSearchParams();
   const rawTab = params.get("tab");
   const tab: DashboardTab =
@@ -51,13 +48,26 @@ export default function DashboardPage() {
       ? (rawTab as DashboardTab)
       : "my-drive";
 
-  const selectedFile = useMemo(
-    () =>
-      [...FILES, ...SHARED_FILES, ...TRASH_FILES].find(
-        (f) => f.id === selected,
-      ) ?? null,
-    [selected],
-  );
+  const selectedFile = useMemo(() => {
+    const legacy = [...FILES, ...SHARED_FILES, ...TRASH_FILES].find(
+      (f) => f.id === selected,
+    );
+    if (legacy) return legacy;
+
+    const storeItem = storeFiles.find((f) => f.id === selected);
+    if (!storeItem) return null;
+
+    return {
+      id: storeItem.id,
+      name: storeItem.name,
+      kind: kindFromMimeType(storeItem.mimeType),
+      size: formatBytes(storeItem.size),
+      modified: storeItem.updatedAt,
+      owner: "You",
+      url: storeItem.url,
+      previewType: storeItem.previewType,
+    } satisfies FileRow;
+  }, [selected, storeFiles]);
 
   return (
     <div className="flex min-h-full">

@@ -82,7 +82,6 @@ export function ProfileTab() {
       >
         <div className="divide-y rounded-xl border">
           {PROVIDERS.map((provider) => {
-            console.log(provider);
             const isConnected = connectedProviders.has(provider.key);
 
             const Icon = provider.key === "google" ? GoogleIcon : undefined;

@@ -31,15 +31,6 @@ import { logoutUserApi } from "@/features/auth/api";
 import Image from "next/image";
 import { ShimmerImage } from "@/components/ShimmerImage";
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
 export function ProfileMenu() {
   const user = useUserStore(selectUser);
   const logout = useUserStore((s) => s.logout);
@@ -47,7 +38,6 @@ export function ProfileMenu() {
 
   const name = user?.fullName ?? "Guest";
   const email = user?.email ?? "";
-  const initials = getInitials(name);
   const storageUsedGB = user
     ? (user.storageUsed / 1_073_741_824).toFixed(0)
     : "0";

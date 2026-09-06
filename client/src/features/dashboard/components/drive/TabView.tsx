@@ -1,10 +1,9 @@
-import { FolderPlus, RotateCcw, Trash2, Folder } from "lucide-react";
+import { FolderPlus, RotateCcw, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { QUICK_FOLDERS } from "@/features/dashboard/data/dashboard";
-import type { DashboardTab } from "@/features/dashboard/components/DashboardShell";
+import type { DashboardTab } from "@/features/dashboard/types/dashboard-tabs";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
 import { TabShell } from "./TabShell";

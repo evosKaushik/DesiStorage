@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  Suspense,
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { Suspense, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { UploadProvider } from "./UploadContext";
+import { SearchProvider } from "../context/dashboard-search";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 
@@ -16,36 +11,6 @@ const UploadPanel = dynamic(
   () => import("./UploadPanel").then((m) => m.UploadPanel),
   { ssr: false },
 );
-
-export type DashboardTab =
-  | "home"
-  | "my-drive"
-  | "shared"
-  | "recent"
-  | "starred"
-  | "links"
-  | "trash";
-
-export const DEFAULT_TAB: DashboardTab = "my-drive";
-
-type SearchCtx = { query: string; setQuery: (v: string) => void };
-const SearchCtx = createContext<SearchCtx | null>(null);
-
-function SearchProvider({ children }: { children: ReactNode }) {
-  const [query, setQuery] = useState("");
-  return (
-    <SearchCtx.Provider value={{ query, setQuery }}>
-      {children}
-    </SearchCtx.Provider>
-  );
-}
-
-export function useDashboardSearch() {
-  const ctx = useContext(SearchCtx);
-  if (!ctx)
-    throw new Error("useDashboardSearch must be used inside DashboardShell");
-  return ctx;
-}
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (

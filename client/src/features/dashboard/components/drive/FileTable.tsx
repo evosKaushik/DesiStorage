@@ -1,12 +1,9 @@
 import { MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FileItem } from "@/store/useFileSystemStore";
-import {
-  FILE_ICONS,
-  colorFor,
-  formatBytes,
-  kindFromMimeType,
-} from "./file-meta";
+import { FILE_ICONS, colorFor, kindFromMimeType } from "./file-meta";
+import { formatBytes } from "@/lib/format";
+import { FilePreview } from "./FilePreview";
 
 export function FileTable({
   files,
@@ -29,6 +26,9 @@ export function FileTable({
         const kind = kindFromMimeType(f.mimeType);
         const Icon = FILE_ICONS[kind];
         const active = selected === f.id;
+        const showMediaPreview =
+          f.url !== undefined &&
+          (f.previewType === "image" || f.previewType === "video");
         return (
           <button
             key={f.id}
@@ -41,11 +41,15 @@ export function FileTable({
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                  "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg",
                   colorFor(kind),
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <FilePreview
+                  url={showMediaPreview ? f.url : undefined}
+                  previewType={f.previewType}
+                />
+                {!showMediaPreview && <Icon className="h-4 w-4" />}
               </div>
               <span className="truncate font-medium">{f.name}</span>
             </div>

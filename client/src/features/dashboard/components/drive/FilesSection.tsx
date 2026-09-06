@@ -45,8 +45,8 @@ export function FileSystemSection({
     return (
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {folders.map((f) => (
-          <ContextMenu>
-            <ContextMenuTrigger key={f.id}>
+          <ContextMenu key={f.id}>
+            <ContextMenuTrigger>
               <FolderCard
                 folder={f}
                 active={selected === f.id}
@@ -59,8 +59,8 @@ export function FileSystemSection({
           </ContextMenu>
         ))}
         {files.map((f) => (
-          <ContextMenu>
-            <ContextMenuTrigger key={f.id}>
+          <ContextMenu key={f.id}>
+            <ContextMenuTrigger>
               <FileCard
                 file={f}
                 active={selected === f.id}

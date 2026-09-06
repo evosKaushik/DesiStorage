@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { SectionCard } from "../SectionCard";
 import useUserStore, { selectUser } from "@/store/useUserStore";
-import UseStorageDetails from "@/hooks/useStorageDetails";
+import { getStorageDetails } from "@/hooks/useStorageDetails";
 
 const STORAGE_BREAKDOWN = [
   {
@@ -23,7 +23,7 @@ export function StorageTab() {
   const user = useUserStore(selectUser);
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
-    UseStorageDetails(user?.storageUsed, user?.storageLimit);
+    getStorageDetails(user?.storageUsed, user?.storageLimit);
 
   return (
     <div className="space-y-6">

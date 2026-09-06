@@ -5,7 +5,7 @@ import { FileCard } from "./FileCard";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
-import UseStorageDetails from "@/hooks/useStorageDetails";
+import { getStorageDetails } from "@/hooks/useStorageDetails";
 
 export function HomeTab({
   setSelected,
@@ -16,7 +16,7 @@ export function HomeTab({
   const files = useFileSystemStore(useShallow(selectFiles));
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
-    UseStorageDetails(user?.storageUsed, user?.storageLimit);
+    getStorageDetails(user?.storageUsed, user?.storageLimit);
   const suggestions = files.slice(0, 4);
   return (
     <>

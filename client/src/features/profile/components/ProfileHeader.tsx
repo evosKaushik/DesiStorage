@@ -15,16 +15,8 @@ import { cn } from "@/lib/utils";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 
 import useFileSelectorFromDisk from "@/hooks/useFileSelectorFromDisk";
+import { getInitials } from "@/lib/user";
 import { useEffect } from "react";
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 export function ProfileHeader() {
   const user = useUserStore(selectUser);

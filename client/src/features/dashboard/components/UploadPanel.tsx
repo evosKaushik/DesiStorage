@@ -16,7 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { formatSize, useUploads } from "./UploadContext";
+import { formatBytes } from "@/lib/format";
+import { useUploads } from "./UploadContext";
 
 
 function iconFor(name: string) {
@@ -123,7 +124,7 @@ export function UploadPanel() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="truncate text-sm font-medium">{it.name}</div>
                       <div className="shrink-0 text-[11px] text-muted-foreground">
-                        {formatSize(it.size)}
+                        {formatBytes(it.size)}
                       </div>
                     </div>
                     {(it.status === "uploading" || it.status === "queued") && (
