@@ -51,6 +51,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export function ProfileTab() {
   const user = useUserStore(selectUser);
+
   if (!user) return null;
 
   const connectedProviders = new Set(user.authProviders ?? []);
@@ -81,7 +82,6 @@ export function ProfileTab() {
       >
         <div className="divide-y rounded-xl border">
           {PROVIDERS.map((provider) => {
-            console.log(provider);
             const isConnected = connectedProviders.has(provider.key);
 
             const Icon = provider.key === "google" ? GoogleIcon : undefined;

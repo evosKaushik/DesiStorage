@@ -14,13 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useUploads } from "./UploadContext";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
-import type { DashboardTab } from "./DashboardShell";
+import type { DashboardTab } from "../types/dashboard-tabs";
 import useUserStore, { selectUser } from "@/store/useUserStore";
-import UseStorageDetails from "@/hooks/useStorageDetails";
+import { getStorageDetails } from "@/hooks/useStorageDetails";
+import { useFileSystemUploads } from "@/hooks/useFileSystemUploads";
 
 const NAV: {
   id: DashboardTab;
@@ -39,11 +39,11 @@ const NAV: {
 
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { openPicker } = useUploads();
+  const { openPicker } = useFileSystemUploads();
   const user = useUserStore(selectUser);
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =
-    UseStorageDetails(user?.storageUsed, user?.storageLimit);
+    getStorageDetails(user?.storageUsed, user?.storageLimit);
 
   const pathname = usePathname();
   const params = useSearchParams();
@@ -59,9 +59,7 @@ export function DashboardSidebar() {
       <aside
         className={cn(
           "hidden shrink-0 flex-col border-r   border-border/60 bg-card/40 backdrop-blur-lg transition-all duration-300 sm:flex max-md:absolute max-md:z-99 max-md:left-0 max-md:bottom-0 max-md:top-0",
-          collapsed
-            ? "w-[72px] "
-            : "w-[260px]",
+          collapsed ? "w-[72px] " : "w-[260px]",
         )}
       >
         <div className="flex h-16 items-center gap-2 px-4">

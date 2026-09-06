@@ -13,6 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileTab } from "./tabs/ProfileTab";
 
+
 const StorageTab = dynamic(() =>
   import("./tabs/StorageTab").then((m) => m.StorageTab),
 );
@@ -29,7 +30,14 @@ const SupportTab = dynamic(() =>
   import("./tabs/SupportTab").then((m) => m.SupportTab),
 );
 
-const TABS = ["profile", "storage", "security", "sessions", "notifications", "support"] as const;
+const TABS = [
+  "profile",
+  "storage",
+  "security",
+  "sessions",
+  "notifications",
+  "support",
+] as const;
 type TabValue = (typeof TABS)[number];
 
 function isValidTab(v: string | null): v is TabValue {
@@ -42,6 +50,8 @@ export function ProfileTabs() {
   const raw = searchParams.get("tab");
   const activeTab: TabValue = isValidTab(raw) ? raw : "profile";
 
+
+
   function handleChange(value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "profile") {
@@ -53,7 +63,11 @@ export function ProfileTabs() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={handleChange} className="mt-8 flex flex-col">
+    <Tabs
+      value={activeTab}
+      onValueChange={handleChange}
+      className="mt-8 flex flex-col"
+    >
       <TabsList className="h-auto flex-wrap justify-start gap-1 bg-muted/40 p-1">
         <TabsTrigger value="profile">
           <User className="mr-2 h-4 w-4" />

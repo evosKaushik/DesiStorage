@@ -23,7 +23,6 @@ export function useGoogleAuthentication() {
 
   const onSuccess = useCallback(
     async (credentialResponse: CredentialResponse) => {
-      console.log(credentialResponse)
       let { credential, clientId } = credentialResponse;
 
       clientId = clientId ?? ENV.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -65,9 +64,7 @@ export function useGoogleAuthentication() {
     [router, setUser],
   );
 
-  const onError = useCallback(() => {
-    console.log("Login Failed");
-  }, []);
+  const onError = useCallback(() => {}, []);
 
   return { onSuccess, onError };
 }

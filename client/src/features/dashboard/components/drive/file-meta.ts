@@ -20,6 +20,18 @@ export const FILE_ICONS: Record<FileKind, typeof Folder> = {
   doc: FileText,
 };
 
+export function kindFromMimeType(mimeType: string): FileKind {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (/^application\/(x-)?pdf$|^application\/x-pdf/.test(mimeType)) return "pdf";
+  if (/spreadsheet|ms-excel|\/(\s*)?csv|opendocument\.spreadsheet/.test(mimeType))
+    return "sheet";
+  if (/zip|compressed|x-tar|gzip|rar|7z/.test(mimeType)) return "zip";
+  if (/word|msword|officedocument|^text\//.test(mimeType)) return "doc";
+  return "doc";
+}
+
 export function colorFor(kind: FileKind) {
   switch (kind) {
     case "image":

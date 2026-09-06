@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FileRow } from "@/features/dashboard/types/types";
 import { FILE_ICONS, colorFor } from "./file-meta";
+import { FilePreview } from "./FilePreview";
 
 export function PreviewPane({
   file,
@@ -28,15 +29,19 @@ export function PreviewPane({
       </div>
 
       <div className="p-4">
-        <div className="flex aspect-video items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/60 to-muted/20">
-          <div
-            className={cn(
-              "flex h-16 w-16 items-center justify-center rounded-2xl",
-              colorFor(file.kind),
-            )}
-          >
-            <Icon className="h-8 w-8" />
-          </div>
+        <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/60 to-muted/20">
+          {file.url && file.previewType !== "audio" ? (
+            <FilePreview url={file.url} previewType={file.previewType} />
+          ) : (
+            <div
+              className={cn(
+                "flex h-16 w-16 items-center justify-center rounded-2xl",
+                colorFor(file.kind),
+              )}
+            >
+              <Icon className="h-8 w-8" />
+            </div>
+          )}
         </div>
 
         <div className="mt-4">

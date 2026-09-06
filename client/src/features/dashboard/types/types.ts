@@ -1,3 +1,5 @@
+import type { FilePreviewType } from "@/store/useFileSystemStore";
+
 export type FileKind =
   | "folder"
   | "image"
@@ -17,6 +19,8 @@ export interface FileRow  {
   shared?: boolean;
   starred?: boolean;
   color?: string;
+  url?: string;
+  previewType?: FilePreviewType;
 };
 
 export interface ShareLink {

@@ -1,7 +1,7 @@
 "use client";
 
 import Image, { ImageProps } from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ShimmerImageProps extends ImageProps {
   fallback?: string;
@@ -16,6 +16,20 @@ export function ShimmerImage({
 }: ShimmerImageProps) {
   const [loading, setLoading] = useState(true);
   const [src, setSrc] = useState(props.src);
+
+  // Keep the internal src in sync when the src prop changes (e.g. a new
+  // avatar selected in the profile page). Without this the displayed image
+  // stays stuck on the value it had on mount.
+  useEffect(() => {
+    setSrc(props.src);
+    setLoading(true);
+  }, [props.src]);
+
+  // next/image can't run local object URLs through the image optimizer.
+  // Skip optimization so blob:/data: previews render as a plain <img>.
+  const isLocalPreview =
+    typeof src === "string" &&
+    (src.startsWith("blob:") || src.startsWith("data:"));
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -42,6 +56,7 @@ export function ShimmerImage({
       <Image
         {...props}
         src={src}
+        unoptimized={isLocalPreview}
         sizes={props.fill && !props.sizes ? "48px" : props.sizes}
         className={`${className ?? ""} ${
           loading ? "opacity-0" : "opacity-100"
