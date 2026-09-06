@@ -20,6 +20,7 @@ import {
   TRASH_FILES,
 } from "@/features/dashboard/data/dashboard";
 import { TabView } from "@/features/dashboard/components/drive/TabView";
+import { FilePreviewProvider } from "@/features/dashboard/components/FilePreviewModel";
 
 const PreviewPane = dynamic(
   () =>
@@ -28,11 +29,8 @@ const PreviewPane = dynamic(
     ),
   { loading: () => <div className="w-80 shrink-0" /> },
 );
-const VerifyEmailBanner = dynamic(
-  () =>
-    import("@/features/auth/components/VerifyEmailBanner").then(
-      (m) => m.default,
-    ),
+const VerifyEmailBanner = dynamic(() =>
+  import("@/features/auth/components/VerifyEmailBanner").then((m) => m.default),
 );
 
 export default function DashboardPage() {
@@ -71,18 +69,20 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-full">
-      <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
-        <VerifyEmailBanner />
-        <TabView
-          tab={tab}
-          query={query}
-          view={view}
-          setView={setView}
-          selected={selected}
-          setSelected={setSelected}
-          openPicker={openPicker}
-        />
-      </div>
+      <FilePreviewProvider>
+        <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
+          <VerifyEmailBanner />
+          <TabView
+            tab={tab}
+            query={query}
+            view={view}
+            setView={setView}
+            selected={selected}
+            setSelected={setSelected}
+            openPicker={openPicker}
+          />
+        </div>
+      </FilePreviewProvider>
 
       {selectedFile && (
         <PreviewPane file={selectedFile} onClose={() => setSelected(null)} />

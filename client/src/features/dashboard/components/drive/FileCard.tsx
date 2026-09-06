@@ -9,14 +9,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FileItem } from "@/store/useFileSystemStore";
-import {
-  FILE_ICONS,
-  colorFor,
-  kindFromMimeType,
-} from "./file-meta";
+import { FILE_ICONS, colorFor, kindFromMimeType } from "./file-meta";
 import { formatBytes } from "@/lib/format";
 import FileItemContextMenu from "../FileItemContextMenu";
 import { FilePreview } from "./FilePreview";
+import { useFilePreview } from "../FilePreviewModel";
 
 export function FileCard({
   file,
@@ -29,6 +26,7 @@ export function FileCard({
   active?: boolean;
   onClick?: () => void;
 }) {
+  const { open } = useFilePreview();
   const kind = kindFromMimeType(file.mimeType);
   const Icon = FILE_ICONS[kind];
   const showMediaPreview =
@@ -67,7 +65,10 @@ export function FileCard({
           {formatBytes(file.size)}
         </div>
 
-        <FileItemContextMenu selectedItemId={file.id} selectedItemName={file.name} />
+        <FileItemContextMenu
+          selectedItemId={file.id}
+          selectedItemName={file.name}
+        />
       </article>
     );
   }
@@ -77,25 +78,34 @@ export function FileCard({
       role="button"
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && onClick) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      onDoubleClick={() => open(file)}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border bg-card text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none",
+        "group relative w-full overflow-hidden rounded-lg border bg-card p-2 text-left transition-all",
+        "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5",
+        "focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none",
         active
           ? "border-primary/60 ring-2 ring-primary/20"
           : "border-border/60 hover:border-primary/40",
         onClick && "cursor-pointer",
       )}
     >
-      <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-muted/60 to-muted/20">
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="min-w-0 truncate text-sm font-medium">{file.name}</div>
+
+        <FileItemContextMenu
+          selectedItemId={file.id}
+          selectedItemName={file.name}
+        />
+      </div>
+
+      {/* Preview */}
+      <div className="relative mt-2 aspect-[16/10] w-full overflow-hidden rounded-md bg-muted/40">
         <FilePreview
           url={showMediaPreview ? file.url : undefined}
           previewType={file.previewType}
         />
+
         {!showMediaPreview && (
           <div
             className={cn(
@@ -106,19 +116,6 @@ export function FileCard({
             <Icon className="h-6 w-6" />
           </div>
         )}
-      </div>
-      <div className="border-t border-border/60 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{file.name}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {formatBytes(file.size)} · {file.updatedAt}
-            </div>
-          </div>
-          <div className="shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            <FileItemContextMenu selectedItemId={file.id} selectedItemName={file.name}/>
-          </div>
-        </div>
       </div>
     </div>
   );

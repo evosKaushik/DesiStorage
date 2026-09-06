@@ -8,12 +8,14 @@ import useFileSystemStore, {
   selectFolders,
 } from "@/store/useFileSystemStore";
 import { ArrowUpAZIcon } from "lucide-react";
+import { useState } from "react";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import DialogWithInput from "@/components/DialogWithInput";
 import { FileItemContentBody } from "../FileItemContextMenu";
 
 const ROW_HEADER_CLASSES =
@@ -33,6 +35,12 @@ export function FileSystemSection({
   const folders = useFileSystemStore(useShallow(selectFolders));
   const files = useFileSystemStore(useShallow(selectFiles));
 
+  const renameItemById = useFileSystemStore((state) => state.renameItemById);
+  const [renameTarget, setRenameTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   if (folders.length === 0 && files.length === 0) {
     return (
       <div className="mt-6 rounded-2xl border border-dashed border-border/70 bg-muted/20 py-16 text-center text-sm text-muted-foreground">
@@ -43,7 +51,8 @@ export function FileSystemSection({
 
   if (view === "grid") {
     return (
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <>
+        <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
         {folders.map((f) => (
           <ContextMenu key={f.id}>
             <ContextMenuTrigger>
@@ -54,7 +63,9 @@ export function FileSystemSection({
               />
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <FileItemContentBody />
+              <FileItemContentBody
+                onRename={() => setRenameTarget({ id: f.id, name: f.name })}
+              />
             </ContextMenuContent>
           </ContextMenu>
         ))}
@@ -68,11 +79,30 @@ export function FileSystemSection({
               />
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <FileItemContentBody />
+              <FileItemContentBody
+                onRename={() => setRenameTarget({ id: f.id, name: f.name })}
+              />
             </ContextMenuContent>
           </ContextMenu>
         ))}
-      </div>
+        </div>
+
+        <DialogWithInput
+          title="Rename"
+          defaultValue={renameTarget?.name}
+          placeholder="Enter new name"
+          open={renameTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setRenameTarget(null);
+          }}
+          onSubmit={(newName) => {
+            if (renameTarget) {
+              renameItemById(renameTarget.id, newName);
+              // Todo: Implement Rename API
+            }
+          }}
+        />
+      </>
     );
   }
 

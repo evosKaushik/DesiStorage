@@ -43,7 +43,10 @@ export function FolderCard({
         </div>
         <div className="text-muted-foreground hidden md:block">—</div>
 
-        <FileItemContextMenu />
+        <FileItemContextMenu
+          selectedItemId={folder.id}
+          selectedItemName={folder.name}
+        />
       </div>
     );
   }
@@ -60,29 +63,33 @@ export function FolderCard({
         }
       }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border bg-card text-left transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none",
+        "group relative flex w-full flex-col overflow-hidden rounded-lg border bg-card p-1 text-left transition-all",
+        "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5",
+        "focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:outline-none",
         active
           ? "border-primary/60 ring-2 ring-primary/20"
           : "border-border/60 hover:border-primary/40",
         onClick && "cursor-pointer",
       )}
     >
-      <div className="relative flex h-28 items-center justify-center bg-gradient-to-br from-primary/10 to-muted/20">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Folder className="h-6 w-6" fill="currentColor" fillOpacity={0.1} />
+      {/* Header */}
+      <div className="flex items-center justify-between px-2">
+        <div className="min-w-0 truncate text-sm font-medium">
+          {folder.name}
+        </div>
+
+        <div className="shrink-0">
+          <FileItemContextMenu
+            selectedItemId={folder.id}
+            selectedItemName={folder.name}
+          />
         </div>
       </div>
-      <div className="border-t border-border/60 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{folder.name}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {folder.updatedAt}
-            </div>
-          </div>
-          <div className="shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            <FileItemContextMenu />
-          </div>
+
+      {/* Folder preview */}
+      <div className="relative mt-2 flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-md bg-muted/40">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Folder className="h-6 w-6" fill="currentColor" fillOpacity={0.1} />
         </div>
       </div>
     </div>
