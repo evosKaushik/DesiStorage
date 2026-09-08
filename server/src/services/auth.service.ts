@@ -6,7 +6,7 @@ import type {
 import { ApiError } from "../utils/ApiError.js";
 import { sendEmail } from "../utils/email.js";
 import Session from "../models/session.model.js";
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, Types } from "mongoose";
 import {
   DEFAULT_AVATAR,
   MAX_SESSIONS,
@@ -26,6 +26,7 @@ import {
   passwordResetRedisKey,
 } from "../utils/cacheKeys.js";
 import { verifyIdToken } from "../utils/googleAuth.js";
+import Folder from "../models/folder.model.js";
 
 const PASSWORD_RESET_COOLDOWN_TTL_SECONDS = RESET_PASSWORD_TTL_SECONDS;
 
@@ -36,14 +37,32 @@ const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
     throw new ApiError(409, "Email already exists");
   }
 
-  const newUser = await User.create({
-    fullName,
-    email,
-    password,
-    authProviders: ["local"],
+  const rootDirId = new Types.ObjectId();
+  const userId = new Types.ObjectId();
+
+  await Folder.create({
+    _id: rootDirId,
+    name: `root-${email}`,
+    parentFolderId: null,
+    userId,
+    size: 0,
   });
 
-  return newUser;
+  try {
+    const newUser = await User.create({
+      _id: userId,
+      fullName,
+      email,
+      password,
+      authProviders: ["local"],
+      rootFolderId: rootDirId,
+    });
+
+    return newUser;
+  } catch (error) {
+    await Folder.deleteOne({ _id: rootDirId });
+    throw error;
+  }
 };
 
 const loginUser = async ({ email, password }: LoginUserBody) => {

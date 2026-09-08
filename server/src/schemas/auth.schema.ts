@@ -6,7 +6,7 @@ export const verifyEmailSchema = z.object({
     .length(6, "OTP must be exactly 6 digits")
     .regex(/^\d{6}$/, "OTP must contain only numbers"),
 });
-export const loginUserSchema = z.object({
+const emailPasswordSchema = z.object({
   email: z
     .email("Invalid email address")
     .trim()
@@ -23,9 +23,13 @@ export const loginUserSchema = z.object({
       /[!-/:-@[-`{-~]/,
       "Password must contain at least one special character",
     ),
+});
+
+export const loginUserSchema = emailPasswordSchema.extend({
   isRememberMe: z.boolean(),
 });
-export const registerUserSchema = loginUserSchema.extend({
+
+export const registerUserSchema = emailPasswordSchema.extend({
   fullName: z
     .string()
     .trim()

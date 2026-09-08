@@ -35,6 +35,7 @@ app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
   app.setErrorHandler((error: FastifyError, request, reply) => {
+    reply.log.error(error)
     if (error.validation) {
       return reply.code(400).send({
         success: false,

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 import { SALT_ROUNDS } from "../config/bcrypt.js";
 import bcrypt from "bcrypt";
 import { DEFAULT_AVATAR } from "../constants/constant.js";
@@ -6,12 +6,14 @@ import { DEFAULT_AVATAR } from "../constants/constant.js";
 export type AuthProvider = "local" | "google";
 
 export interface IUser {
+  _id?: Types.ObjectId;
   fullName: string;
   email: string;
   password: string | null;
   avatar: string;
   googleId?: string | null;
   authProviders: AuthProvider[];
+  rootFolderId: Types.ObjectId | null;
   storageLimit: number;
   storageUsed: number;
   isEmailVerified: boolean;
@@ -106,6 +108,12 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
       type: String,
       unique: true,
       sparse: true,
+    },
+
+    //Parent Folder Id
+    rootFolderId: {
+      type: Schema.Types.ObjectId,
+      ref: "Directory",
     },
 
     // User total Storage

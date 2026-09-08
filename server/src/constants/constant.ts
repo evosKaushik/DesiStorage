@@ -10,4 +10,8 @@ export const SESSION_ACTIVITY_DB_WRITE_INTERVAL = 5 * 60 * 1000; // 5 minutes (m
 
 export const RESET_PASSWORD_TTL_SECONDS = 10 * 60; // 10 minutes
 
-export const DEFAULT_AVATAR="https://res.cloudinary.com/dvhqwwpdl/image/upload/v1777532041/default-avatar_frnvfo.jpg"
+export const DEFAULT_AVATAR =
+  "https://res.cloudinary.com/dvhqwwpdl/image/upload/v1777532041/default-avatar_frnvfo.jpg";
+
+// Folder Or File Name Regex
+export const storageNameRegex = /^(?!\.{1,2}$)(?!.*[. ]$)[^\\/:*?"<>|]+$/;
