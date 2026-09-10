@@ -23,6 +23,8 @@ const envSchema = z.object({
   // Resend
   RESEND_API_KEY: z.string(),
 
+  SPACE_BYTE_ACCESS_TOKEN: z.string(),
+
   // Google OAuth Credentials
   GOOGLE_CLIENT_ID: z
     .string()

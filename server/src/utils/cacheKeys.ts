@@ -18,3 +18,5 @@ export const passwordResetRedisKey = (random: string): string =>
 
 export const passwordResetCooldownKey = (userId: string): string =>
   `password-reset:cooldown:${userId}`;
+
+export const uploadIdKey = (uploadId: string) => `upload:${uploadId}`;

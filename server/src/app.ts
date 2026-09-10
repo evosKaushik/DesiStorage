@@ -31,16 +31,30 @@ export async function buildApp({
 }: BuildAppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger });
 
-app.setValidatorCompiler(validatorCompiler);
+  app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  app.setErrorHandler((error: FastifyError, request, reply) => {
-    reply.log.error(error)
+  app.setErrorHandler((error: FastifyError, req, reply) => {
+    reply.log.error(error);
     if (error.validation) {
+      const details = error.validation.map((err) => {
+        const params = err.params as { missingProperty?: string } | undefined;
+
+        const field =
+          typeof params?.missingProperty === "string"
+            ? params.missingProperty
+            : err.instancePath.replace(/^\//, "");
+
+        return {
+          field: field || "body",
+          message: err.message,
+        };
+      });
+
       return reply.code(400).send({
         success: false,
-        message: "Validation failed",
-        errors: error.validation.map((err) => err.message),
+        message: `Validation failed: ${details[0]?.field}`,
+        errors: details,
       });
     }
 
@@ -51,6 +65,29 @@ app.setValidatorCompiler(validatorCompiler);
       });
     }
 
+    if (error.name === "ValidationError") {
+      const details = Object.entries(
+        (error as unknown as { errors: Record<string, { message: string }> })
+          .errors,
+      ).map(([field, err]) => ({
+        field,
+        message: err.message,
+      }));
+
+      return reply.code(400).send({
+        success: false,
+        message: `Validation failed: ${details[0]?.field}`,
+        errors: details,
+      });
+    }
+
+    if (error.name === "CastError") {
+      return reply.code(400).send({
+        success: false,
+        message: "Invalid ID provided",
+      });
+    }
+
     if ("code" in error && Number(error.code) === 11000) {
       return reply.code(409).send({
         success: false,
@@ -58,11 +95,11 @@ app.setValidatorCompiler(validatorCompiler);
       });
     }
 
-    request.log.error(error);
+    req.log.error(error);
 
     return reply.code(500).send({
       success: false,
-      message: error.message || "Internal Server Error",
+      message: "Internal Server Error",
     });
   });
 

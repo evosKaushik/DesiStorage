@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { storageNameRegex } from "../constants/constant.js";
 import z from "zod";
 
-const objectIdSchema = z.string().refine(Types.ObjectId.isValid, {
+export const objectIdSchema = z.string().refine(Types.ObjectId.isValid, {
   message: "Invalid MongoDB ObjectId",
 });
 

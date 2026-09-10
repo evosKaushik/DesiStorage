@@ -1,5 +1,7 @@
 export const ONE_HOUR = 60 * 60;
 
+export const ONE_DAY = 24 * ONE_HOUR;
+
 export const OTP_TTL_SECONDS = 5 * 60; // 5 minutes
 
 export const MAX_SESSIONS = 3;
@@ -15,3 +17,15 @@ export const DEFAULT_AVATAR =
 
 // Folder Or File Name Regex
 export const storageNameRegex = /^(?!\.{1,2}$)(?!.*[. ]$)[^\\/:*?"<>|]+$/;
+
+// File Base Name Regex (no extension; extension is stored separately)
+export const fileBaseNameRegex = /^[^.]+$/;
+
+// File Extension Regex
+export const fileExtensionRegex = /^\.[a-z]+$/i;
+
+export const SPACE_BYTES_DEFAULT_API = "https://spacebyte.in/api/v1";
+
+// Validate The Mine Type
+export const mimeTypeRegex =
+  /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*$/;
