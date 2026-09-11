@@ -15,8 +15,6 @@ export interface IFile {
   extension: string;
   mimeType: string;
   userId: Types.ObjectId;
-  storageKey: string;
-  storageUrl: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,7 +23,7 @@ type FileModel = mongoose.Model<IFile>;
 
 const fileSchema = new mongoose.Schema<IFile, FileModel>(
   {
-name: {
+    name: {
       type: String,
       required: [true, "File name is required"],
       trim: true,
@@ -34,7 +32,8 @@ name: {
       match: [storageNameRegex, "File name contains invalid characters"],
       validate: {
         validator: (value: string) => fileBaseNameRegex.test(value),
-        message: "File name cannot contain a dot (provide the extension separately)",
+        message:
+          "File name cannot contain a dot (provide the extension separately)",
       },
     },
 
@@ -70,18 +69,6 @@ name: {
       type: Schema.Types.ObjectId,
       required: [true, "Parent Folder ID is required"],
       ref: "Folder",
-    },
-
-    storageKey: {
-      type: String,
-      required: [true, "Storage key is required"],
-      trim: true,
-    },
-
-    storageUrl: {
-      type: String,
-      required: [true, "Storage url is required"],
-      trim: true,
     },
   },
   {

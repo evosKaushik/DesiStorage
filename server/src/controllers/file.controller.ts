@@ -7,18 +7,9 @@ import type {
 import { requireAuthUser } from "../utils/session.js";
 import {
   completeFileUpload,
-  getFileStream,
+  getFilePresignedAccess,
   getUploadPresignedUrl,
 } from "../services/file.service.js";
-
-const getContentDisposition = (
-  filename: string,
-  type: "inline" | "attachment",
-): string => {
-  const asciiSafe = filename.replace(/[^\x20-\x7e]/g, "_");
-
-  return `${type}; filename="${asciiSafe}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
-};
 
 const getUploadPresignedUrlHandler = async (
   req: FastifyRequest<{ Body: GetUploadPresignedUrlBody }>,
@@ -42,13 +33,13 @@ const completeFileUploadHandler = async (
 
   const file = await completeFileUpload({
     userId: authUser.id,
-    uploadId: req.params.uploadId,
+    fileId: req.params.fileId,
   });
 
   reply.success(201, "File registered successfully", { file });
 };
 
-const streamFileByIdHandler =
+const getFileAccessHandler =
   (disposition: "inline" | "attachment") =>
   async (
     req: FastifyRequest<{ Params: FileIdParams }>,
@@ -56,37 +47,17 @@ const streamFileByIdHandler =
   ) => {
     const authUser = requireAuthUser(req);
 
-    const { fileName, mimeType, stream, contentLength } = await getFileStream({
+    const data = await getFilePresignedAccess({
       userId: authUser.id,
       fileId: req.params.fileId,
+      disposition,
     });
 
-    reply.hijack();
-    reply.raw.statusCode = 200;
-    reply.raw.setHeader("Content-Type", mimeType);
-    reply.raw.setHeader(
-      "Content-Disposition",
-      getContentDisposition(fileName, disposition),
-    );
-    reply.raw.setHeader("Cache-Control", "private, max-age=86400");
-    reply.raw.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-    reply.raw.setHeader("Access-Control-Allow-Credentials", "true");
-
-    if (typeof contentLength === "string" || typeof contentLength === "number") {
-      reply.raw.setHeader("Content-Length", contentLength);
-    }
-
-    reply.raw.on("close", () => {
-      stream.destroy();
-    });
-    stream.on("error", () => {
-      reply.raw.destroy();
-    });
-    stream.pipe(reply.raw);
+    reply.success(200, "Presigned file link generated successfully", data);
   };
 
-const getFilePreviewHandler = streamFileByIdHandler("inline");
-const getFileDownloadHandler = streamFileByIdHandler("attachment");
+const getFilePreviewHandler = getFileAccessHandler("inline");
+const getFileDownloadHandler = getFileAccessHandler("attachment");
 
 export {
   getUploadPresignedUrlHandler,

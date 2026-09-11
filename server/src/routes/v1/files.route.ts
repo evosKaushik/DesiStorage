@@ -27,7 +27,7 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
     getUploadPresignedUrlHandler,
   );
   app.post(
-    "/upload/:uploadId/complete",
+    "/upload/:fileId/complete",
     {
       preHandler: requireVerifiedEmail,
       schema: {
@@ -36,7 +36,7 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     completeFileUploadHandler,
   );
-  // Preview File Content (inline + streamed)
+  // Preview File Content (inline presigned link)
   app.get(
     "/:fileId",
     {
@@ -57,7 +57,7 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     getFilePreviewHandler,
   );
-  // Download File Content (attachment + streamed)
+  // Download File Content (attachment presigned link)
   app.get(
     "/:fileId/download",
     {

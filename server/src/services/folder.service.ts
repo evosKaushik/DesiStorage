@@ -11,20 +11,22 @@ const createFolderByParentId = async ({
   parentId,
   userId,
 }: CreateFolderByParentIdParameter) => {
-  const existingParentFolder = Folder.findById(parentId).lean();
+  if (parentId) {
+    const existingParentFolder = await Folder.exists({
+      _id: parentId,
+      userId,
+    });
 
-  console.log(existingParentFolder);
-
-  if (!existingParentFolder) {
-    throw new ApiError(404, "Parent Folder Does not exist!");
+    if (!existingParentFolder) {
+      throw new ApiError(404, "Parent Folder Does not exist!");
+    }
   }
 
   await Folder.create({
     name: folderName,
-    parentFolderId: parentId,
+    parentFolderId: parentId ?? null,
     userId,
   });
-
 };
 
 export { createFolderByParentId };

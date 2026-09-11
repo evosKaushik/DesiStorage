@@ -1,6 +1,5 @@
 import axios from "axios";
 import { apiRequest } from "@/utils/api";
-import { axiosInstance } from "@/utils/axiosInstance";
 
 interface PresignedUrlResponse {
   uploadId: string;
@@ -91,19 +90,33 @@ const uploadFileToStorage = async (
 };
 
 // ---------------------------------------------------------------------------
-// Retrieval URLs (cookie-authenticated GET /files/:id[/preview|/download])
+// Retrieval URLs (presigned GET /files/:id[/preview|/download])
 // ---------------------------------------------------------------------------
 
-/**
- * Same-origin URL for streaming the file inline (e.g. as an <img>/<video> src).
- * Cookies are sent automatically for same-origin requests.
- */
-const getFileStreamUrl = (fileId: string) =>
-  `${axiosInstance.defaults.baseURL}/files/${fileId}/preview`;
+export interface PresignedAccessResponse {
+  url: string;
+  name: string;
+  extension: string;
+  mimeType: string;
+  size: number;
+}
 
-/** Same-origin URL that forces a download (Content-Disposition: attachment). */
-const getFileDownloadUrl = (fileId: string) =>
-  `${axiosInstance.defaults.baseURL}/files/${fileId}/download`;
+/**
+ * Fetches a presigned S3 link that renders the file inline
+ * (an <img>/<video> src). The link points directly at the storage host.
+ */
+const getFileStreamUrl = async (fileId: string) =>
+  apiRequest<PresignedAccessResponse>(
+    "GET",
+    `/files/${fileId}/preview`,
+  );
+
+/** Fetches a presigned S3 link that forces a download (attachment). */
+const getFileDownloadUrl = async (fileId: string) =>
+  apiRequest<PresignedAccessResponse>(
+    "GET",
+    `/files/${fileId}/download`,
+  );
 
 export {
   completeUploadApi,

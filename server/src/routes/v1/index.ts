@@ -9,7 +9,7 @@ const v1Routes: FastifyPluginAsync = async (app) => {
     prefix: "/v1/auth",
   });
   await app.register(folderRoutes, {
-    prefix: "/v1/folder",
+    prefix: "/v1/folders",
   })
   await app.register(fileRoutes, {
     prefix: "/v1/files",

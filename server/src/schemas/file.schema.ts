@@ -38,12 +38,7 @@ export const getUploadPresignedUrlSchema = z.object({
 });
 
 export const completeUploadParamsSchema = z.object({
-  uploadId: z
-    .string()
-    .regex(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-      "Invalid upload ID",
-    ),
+  fileId: objectIdSchema,
 });
 
 export const fileIdParamsSchema = z.object({
