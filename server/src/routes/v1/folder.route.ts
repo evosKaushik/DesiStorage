@@ -1,14 +1,17 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { createFolderByParentIdHandler, getFolderByIdHandler } from "../../controllers/folder.controller.js";
 import { requireVerifiedEmail } from "../../middleware/auth.middleware.js";
-import { createFolderSchema } from "../../schemas/folder.schema.js";
+import { createFolderSchema, FolderIdSchema } from "../../schemas/folder.schema.js";
 
 const folderRoutes: FastifyPluginAsyncZod = async (app) => {
   // Get Folder
   app.get(
-    "/:id",
+    "/:folderId",
     {
       preHandler: requireVerifiedEmail,
+      schema: {
+        params: FolderIdSchema
+      }
     },
     getFolderByIdHandler,
   );

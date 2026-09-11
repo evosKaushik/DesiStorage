@@ -19,7 +19,13 @@ export const createFolderSchema = z.object({
       'Folder name cannot contain: \\ / : * ? " < > | and cannot end with a space or period.',
     )
     .optional()
-    .default("New Folder")
+    .default("New Folder"),
+});
+
+export const FolderIdSchema = z.object({
+  folderId: objectIdSchema,
 });
 
 export type CreateFolderBody = z.infer<typeof createFolderSchema>;
+
+export type FolderIdParams = z.infer<typeof FolderIdSchema>;
