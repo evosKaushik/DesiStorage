@@ -65,7 +65,6 @@ const getUploadPresignedUrl = async ({
 }: GetUploadPresignedUrlParameter): Promise<{
   uploadId: string;
   url: string;
-  acl: string;
 }> => {
   const existingFolder = await Folder.findById(parentId);
 
@@ -79,7 +78,7 @@ const getUploadPresignedUrl = async ({
 
   const storage = getStorageProvider();
 
-  const { url, key, acl } = await storage.generatePresignedUploadUrl({
+  const { url, key } = await storage.generatePresignedUploadUrl({
     filename: `${name}${extension}`,
     size,
     mimeType,
@@ -103,7 +102,7 @@ const getUploadPresignedUrl = async ({
     throw new ApiError(503, "Upload session store is unavailable");
   }
 
-  return { uploadId, url, acl };
+  return { uploadId, url };
 };
 
 const completeFileUpload = async ({
@@ -144,15 +143,9 @@ const completeFileUpload = async ({
 
   const storage = getStorageProvider();
 
-  const entry = await storage.registerFile({
-    filename: cachedData.key.split("/")[0] ?? cachedData.key,
-    clientName: `${cachedData.name}${cachedData.extension}`,
-    size: cachedData.size,
-    clientMime: cachedData.mimeType,
-    clientExtension: cachedData.extension,
-    disk: "s3",
-    parentId: null,
-    relativePath: "/",
+  const entry = await storage.verifyUpload({
+    key: cachedData.key,
+    expectedSize: cachedData.size,
   });
 
   const file = await File.create({
@@ -162,8 +155,8 @@ const completeFileUpload = async ({
     mimeType: cachedData.mimeType,
     userId: new Types.ObjectId(userId),
     parentFolderId: new Types.ObjectId(cachedData.parentId),
-    spaceByteHash: entry.hash,
-    spaceByteUrl: entry.url,
+    storageKey: entry.key,
+    storageUrl: entry.url,
   });
 
   try {
@@ -205,7 +198,7 @@ const getFileStream = async ({
   // so preview/download bypass the direct storage stream below.
   const storage = getStorageProvider();
 
-  const download = await storage.createDownloadStream(file.spaceByteHash);
+  const download = await storage.createDownloadStream(file.storageKey);
 
   return {
     fileName: `${file.name}${file.extension}`,

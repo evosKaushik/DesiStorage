@@ -95,7 +95,7 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
   }
 
   const user = await User.findById(userId)
-    .select("email fullName avatar storageLimit storageUsed isEmailVerified authProviders")
+    .select("email fullName avatar storageLimit storageUsed isEmailVerified authProviders rootFolderId")
     .lean();
 
   if (!user) {
@@ -113,6 +113,7 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
       storageLimit: user.storageLimit,
       storageUsed: user.storageUsed,
       isEmailVerified: user.isEmailVerified,
+      rootFolderId: user.rootFolderId?.toString() ?? null,
       authProviders: user.authProviders,
     },
     ONE_HOUR,
@@ -126,6 +127,7 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
     storageLimit: user.storageLimit,
     storageUsed: user.storageUsed,
     isEmailVerified: user.isEmailVerified,
+    rootFolderId: user.rootFolderId?.toString() ?? null,
     authProviders: user.authProviders,
   };
 };

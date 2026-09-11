@@ -15,8 +15,8 @@ export interface IFile {
   extension: string;
   mimeType: string;
   userId: Types.ObjectId;
-  spaceByteHash: string;
-  spaceByteUrl: string;
+  storageKey: string;
+  storageUrl: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,15 +72,15 @@ name: {
       ref: "Folder",
     },
 
-    spaceByteHash: {
+    storageKey: {
       type: String,
-      required: [true, "SpaceByte hash is required"],
+      required: [true, "Storage key is required"],
       trim: true,
     },
 
-    spaceByteUrl: {
+    storageUrl: {
       type: String,
-      required: [true, "SpaceByte url is required"],
+      required: [true, "Storage url is required"],
       trim: true,
     },
   },

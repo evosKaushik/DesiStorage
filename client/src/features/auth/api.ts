@@ -23,7 +23,8 @@ export interface RegisteredUser {
 }
 
 /** User object returned by POST /auth/login.
- *  NOTE: login does NOT return `avatar`. */
+ *  NOTE: login does NOT return `avatar` or `rootFolderId`
+ *  (both default to `null` in the store). */
 export interface LoginUser {
   id: string;
   fullName: string;
@@ -33,6 +34,7 @@ export interface LoginUser {
   isEmailVerified: boolean;
   storageLimit: number;
   storageUsed: number;
+  rootFolderId?: string | null;
 }
 
 /** Full user object returned by GET /auth (the "me" endpoint).
@@ -47,6 +49,7 @@ export interface MeUser {
   storageLimit: number;
   storageUsed: number;
   isEmailVerified: boolean;
+  rootFolderId: string | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,6 @@ import type { Readable } from "stream";
 export interface StoragePresignedUpload {
   url: string;
   key: string;
-  acl: string;
 }
 
 export interface StoragePresignInput {
@@ -12,19 +11,13 @@ export interface StoragePresignInput {
   mimeType: string;
 }
 
-export interface StorageRegistrationPayload {
-  filename: string;
-  clientName: string;
-  size: number;
-  clientMime: string;
-  clientExtension: string;
-  disk: string;
-  parentId: number | null;
-  relativePath: string;
+export interface StorageVerifyInput {
+  key: string;
+  expectedSize: number;
 }
 
 export interface StorageFileEntry {
-  hash: string;
+  key: string;
   url: string;
 }
 
@@ -38,8 +31,6 @@ export interface StorageProvider {
   generatePresignedUploadUrl(
     input: StoragePresignInput,
   ): Promise<StoragePresignedUpload>;
-  registerFile(
-    payload: StorageRegistrationPayload,
-  ): Promise<StorageFileEntry>;
-  createDownloadStream(hash: string): Promise<StorageDownload>;
+  verifyUpload(input: StorageVerifyInput): Promise<StorageFileEntry>;
+  createDownloadStream(key: string): Promise<StorageDownload>;
 }

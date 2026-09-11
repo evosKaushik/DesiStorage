@@ -50,7 +50,12 @@ const useUserStore = create<UserState>()(
 
     setUser: (user) =>
       set((draft) => {
-        draft.user = user;
+        // Login responses omit `avatar`/`rootFolderId` — default them to null.
+        draft.user = {
+          ...user,
+          avatar: user.avatar ?? null,
+          rootFolderId: user.rootFolderId ?? null,
+        };
       }),
 
     setHydrated: () =>

@@ -19,6 +19,7 @@ export interface AuthUser {
   storageUsed: number;
   isEmailVerified: boolean;
   authProviders: AuthProvider[];
+  rootFolderId: string | null;
 }
 
 declare module "fastify" {

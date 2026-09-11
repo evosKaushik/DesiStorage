@@ -23,7 +23,11 @@ const envSchema = z.object({
   // Resend
   RESEND_API_KEY: z.string(),
 
-  SPACE_BYTE_ACCESS_TOKEN: z.string(),
+  // AWS S3
+  AWS_REGION: z.string(),
+  AWS_BUCKET: z.string(),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
 
   // Google OAuth Credentials
   GOOGLE_CLIENT_ID: z

@@ -18,6 +18,10 @@ const testEnv: Record<string, string> = {
   CLOUDINARY_API_KEY: "test-key",
   CLOUDINARY_API_SECRET: "test-secret",
   RESEND_API_KEY: "re_test_0000000000000000",
+  AWS_REGION: "us-east-1",
+  AWS_BUCKET: "test-bucket",
+  AWS_ACCESS_KEY_ID: "test-access-key",
+  AWS_SECRET_ACCESS_KEY: "test-secret-key",
   GOOGLE_CLIENT_ID: "test-client-id.apps.googleusercontent.com",
   BCRYPT_SALT_ROUNDS: "4",
 };

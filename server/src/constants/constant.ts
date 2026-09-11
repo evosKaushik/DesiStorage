@@ -24,8 +24,5 @@ export const fileBaseNameRegex = /^[^.]+$/;
 // File Extension Regex
 export const fileExtensionRegex = /^\.[a-z]+$/i;
 
-export const SPACE_BYTES_DEFAULT_API = "https://spacebyte.in/api/v1";
-
-// Validate The Mine Type
 export const mimeTypeRegex =
   /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*$/;

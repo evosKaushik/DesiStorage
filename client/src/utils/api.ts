@@ -19,12 +19,18 @@ export interface ApiEnvelope<T> {
   data: T | null;
 }
 
+/** Validation error for a single field (e.g. from Zod/Mongoose failures). */
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
 /** Error body produced by the Fastify error handler. */
 export interface ApiErrorBody {
   success: false;
   message: string;
-  /** Present only on Zod validation failures (HTTP 400). */
-  errors?: string[];
+  /** Present only on validation failures (HTTP 400). */
+  errors?: (string | ApiFieldError)[];
 }
 
 /** Normalized error every consumer can branch on. */
@@ -33,7 +39,28 @@ export interface ApiFailure {
   /** HTTP status, when the server actually responded (absent on network errors). */
   status?: number;
   /** Validation field errors, when the server returned them. */
-  errors?: string[];
+  errors?: (string | ApiFieldError)[];
+}
+
+/**
+ * Renders an `ApiFailure` into a human-readable message.
+ * Prefers per-field errors, falling back to the server message.
+ *
+ * @example
+ * "name: File name cannot contain a dot; size: Must not exceed 100 MB"
+ */
+export function getErrorMessage(failure: ApiFailure): string {
+  if (failure.errors?.length) {
+    return failure.errors
+      .map((error) =>
+        typeof error === "string"
+          ? error
+          : `${error.field}: ${error.message}`,
+      )
+      .join("; ");
+  }
+
+  return failure.message || "Something went wrong. Please try again.";
 }
 
 /**
