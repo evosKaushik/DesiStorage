@@ -191,6 +191,26 @@ export const deleteObjectSafely = async (
   }
 };
 
+/**
+ * Deletes the S3 object for a file (idempotent for missing keys) and
+ * throws a mapped ApiError when the storage provider cannot be reached.
+ * Used when the caller must know whether cleanup actually succeeded.
+ */
+export const deleteFileObject = async (fileId: string): Promise<void> => {
+  const key = getFileStorageKey(fileId);
+
+  try {
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+      }),
+    );
+  } catch (error) {
+    throw toApiError(error, "Storage failed to delete the uploaded file");
+  }
+};
+
 export interface S3PresignedReadOptions {
   mimeType: string;
   contentDisposition: string;

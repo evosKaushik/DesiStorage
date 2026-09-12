@@ -15,11 +15,25 @@ export interface IFile {
   extension: string;
   mimeType: string;
   userId: Types.ObjectId;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-type FileModel = mongoose.Model<IFile>;
+interface FileModel extends mongoose.Model<IFile> {
+  /** Files owned by `userId` that are not in Trash. */
+  findActiveFiles(userId: Types.ObjectId | string): Promise<IFile[]>;
+  /** Files owned by `userId` that are in Trash (soft-deleted). */
+  findTrashedFiles(userId: Types.ObjectId | string): Promise<IFile[]>;
+  /**
+   * A single file owned by `userId`, regardless of its Trash state.
+   * Returns null when the file does not exist or belongs to another user.
+   */
+  findFileByOwner(
+    userId: Types.ObjectId | string,
+    fileId: Types.ObjectId | string,
+  ): Promise<IFile | null>;
+}
 
 const fileSchema = new mongoose.Schema<IFile, FileModel>(
   {
@@ -70,11 +84,38 @@ const fileSchema = new mongoose.Schema<IFile, FileModel>(
       required: [true, "Parent Folder ID is required"],
       ref: "Folder",
     },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
+
+fileSchema.statics.findActiveFiles = function (
+  this: FileModel,
+  userId: Types.ObjectId | string,
+): Promise<IFile[]> {
+  return this.find({ userId, deletedAt: null }).exec();
+};
+
+fileSchema.statics.findTrashedFiles = function (
+  this: FileModel,
+  userId: Types.ObjectId | string,
+): Promise<IFile[]> {
+  return this.find({ userId, deletedAt: { $ne: null } }).exec();
+};
+
+fileSchema.statics.findFileByOwner = function (
+  this: FileModel,
+  userId: Types.ObjectId | string,
+  fileId: Types.ObjectId | string,
+): Promise<IFile | null> {
+  return this.findOne({ _id: fileId, userId }).exec();
+};
 
 const File = mongoose.model<IFile, FileModel>("File", fileSchema);
 

@@ -22,12 +22,12 @@ export const registerUser = async (
 
 export const loginUser = async (
   app: FastifyInstance,
-  body: { email: string; password: string },
+  body: { email: string; password: string; isRememberMe?: boolean },
 ): Promise<LightMyRequestResponse> => {
   return app.inject({
     method: "POST",
     url: "/api/v1/auth/login",
-    payload: body,
+    payload: { ...body, isRememberMe: body.isRememberMe ?? false },
   });
 };
 
@@ -57,7 +57,7 @@ export const authedInject = async (
   app: FastifyInstance,
   cookies: TestCookie[],
   opts: {
-    method: "GET" | "POST";
+    method: "GET" | "POST" | "PATCH";
     url: string;
     payload?: unknown;
   },

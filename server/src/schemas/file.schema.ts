@@ -45,6 +45,18 @@ export const fileIdParamsSchema = z.object({
   fileId: objectIdSchema,
 });
 
+export const renameFileNameSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "File name is required")
+    .max(255, "File name cannot exceed 255 characters")
+    .regex(
+      storageNameRegex,
+      'File name cannot contain: \\ / : * ? " < > | and cannot end with a space or period.',
+    ),
+});
+
 export type GetUploadPresignedUrlBody = z.infer<
   typeof getUploadPresignedUrlSchema
 >;
@@ -52,3 +64,5 @@ export type GetUploadPresignedUrlBody = z.infer<
 export type CompleteUploadParams = z.infer<typeof completeUploadParamsSchema>;
 
 export type FileIdParams = z.infer<typeof fileIdParamsSchema>;
+
+export type RenameFileNameBody = z.infer<typeof renameFileNameSchema>;
