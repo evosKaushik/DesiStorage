@@ -8,6 +8,25 @@ import {
   Archive,
 } from "lucide-react";
 import { FileKind } from "@/features/dashboard/types/types";
+import { mimeTypeFromExtension } from "@/lib/mime";
+import type { FilePreviewType } from "@/store/useFileSystemStore";
+
+export { mimeTypeFromExtension };
+
+/** Maps a MIME type to the previewer able to render it inline. */
+export function previewTypeFromMimeType(mimeType: string): FilePreviewType {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (/^application\/(x-)?pdf$/.test(mimeType)) return "pdf";
+  if (
+    mimeType.startsWith("text/") ||
+    /json|xml|javascript|html/.test(mimeType)
+  ) {
+    return "text";
+  }
+  return null;
+}
 
 export const FILE_ICONS: Record<FileKind, typeof Folder> = {
   folder: Folder,

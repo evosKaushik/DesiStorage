@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { DashboardTab } from "@/features/dashboard/types/dashboard-tabs";
 import { useShallow } from "zustand/react/shallow";
-import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
+import useFileSystemStore, { selectItems } from "@/store/useFileSystemStore";
 import { TabShell } from "./TabShell";
 import { FileSystemSection } from "./FilesSection";
 
@@ -34,7 +34,7 @@ export function TabView({
   setSelected: (id: string | null) => void;
   openPicker: () => void;
 }) {
-  const files = useFileSystemStore(useShallow(selectFiles));
+  const items = useFileSystemStore(useShallow(selectItems));
 
   if (tab === "home") return <HomeTab setSelected={setSelected} />;
 
@@ -163,7 +163,7 @@ export function TabView({
             Files
           </h2> */}
           <span className="text-xs text-muted-foreground">
-            {files.length} items
+            {items.length} items
           </span>
         </div>
         <FileSystemSection

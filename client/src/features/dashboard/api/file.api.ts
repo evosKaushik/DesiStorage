@@ -2,7 +2,7 @@ import axios from "axios";
 import { apiRequest } from "@/utils/api";
 
 interface PresignedUrlResponse {
-  uploadId: string;
+  fileId: string;
   url: string;
 }
 
@@ -32,10 +32,10 @@ interface CompleteUploadResponse {
 const getPresignedUrlApi = (payload: PresignedUrlPayload) =>
   apiRequest<PresignedUrlResponse>("POST", "/files/upload", payload);
 
-const completeUploadApi = (uploadId: string) =>
+const completeUploadApi = (fileId: string) =>
   apiRequest<CompleteUploadResponse>(
     "POST",
-    `/files/upload/${uploadId}/complete`,
+    `/files/upload/${fileId}/complete`,
   );
 
 // ---------------------------------------------------------------------------

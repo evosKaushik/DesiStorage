@@ -53,7 +53,7 @@ export function FileTable({
               </div>
               <span className="truncate font-medium">{f.name}</span>
             </div>
-            <div className="text-muted-foreground">{f.updatedAt}</div>
+            <div className="text-muted-foreground ">{f.updatedAt}</div>
             <div className="text-muted-foreground">{formatBytes(f.size)}</div>
             <MoreVertical className="h-4 w-4 text-muted-foreground" />
           </button>

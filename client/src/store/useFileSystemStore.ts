@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
+import { getFolderByIdApi } from "@/features/dashboard/api/folder.api";
+import { mimeTypeFromExtension } from "@/lib/mime";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -38,6 +41,8 @@ export type FileSystemItem = FileItem | FolderItem;
 export interface FileSystemState {
   currentFolderId: string;
   items: FileSystemItem[];
+  /** True while a folder's contents are being fetched from the server. */
+  loadingFolder: boolean;
 
   setCurrentFolder: (folderId: string) => void;
   setItems: (items: FileSystemItem[]) => void;
@@ -50,6 +55,8 @@ export interface FileSystemState {
   renameItemById: (itemId: string, newName: string) => void;
   getItemById: (itemId: string) => FileSystemItem | undefined;
   clearItems: () => void;
+  /** Fetches a folder + its files from the API and replaces `items`. */
+  loadFolder: (folderId: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -89,12 +96,14 @@ export const selectFolderCount = (state: FileSystemState) =>
 // Store
 // ---------------------------------------------------------------------------
 
-
+const toDisplayDate = (date: string): string =>
+  new Date(date).toLocaleString();
 
 const useFileSystemStore = create<FileSystemState>()(
   immer((set, get) => ({
     currentFolderId: "root",
     items: [],
+    loadingFolder: false,
 
     setCurrentFolder: (folderId) =>
       set((draft) => {
@@ -140,6 +149,46 @@ const useFileSystemStore = create<FileSystemState>()(
       set((draft) => {
         draft.items = [];
       }),
+
+    loadFolder: async (folderId) => {
+      set((draft) => {
+        draft.currentFolderId = folderId;
+        draft.loadingFolder = true;
+        draft.items = [];
+      });
+
+      const result = await getFolderByIdApi(folderId);
+
+      set((draft) => {
+        draft.loadingFolder = false;
+
+        if (!result.success) return;
+
+        const { folders, files } = result.data;
+
+        const folderItems: FileSystemItem[] = folders.map((folder) => ({
+          id: folder.id,
+          name: folder.name,
+          parentId: folder.parentFolderId ?? "root",
+          type: "folder",
+          updatedAt: toDisplayDate(folder.updatedAt),
+        }));
+
+        const fileItems: FileSystemItem[] = files.map((file) => ({
+          id: file.id,
+          name: `${file.name}${file.extension}`,
+          parentId: file.parentFolderId,
+          type: "file",
+          size: file.size,
+          mimeType: mimeTypeFromExtension(file.extension),
+          updatedAt: toDisplayDate(file.updatedAt),
+          // Todo: Fetch a presigned URL via getFileStreamUrl(file.id)
+          // and populate `url` + `previewType` for thumbnail previews.
+        }));
+
+        draft.items = [...folderItems, ...fileItems];
+      });
+    },
   })),
 );
 

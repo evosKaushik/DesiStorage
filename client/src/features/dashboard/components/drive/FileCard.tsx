@@ -1,12 +1,3 @@
-import {
-  MoreVertical,
-  Trash2,
-  InfoIcon,
-  Folder,
-  Share2,
-  Pencil,
-  Download,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FileItem } from "@/store/useFileSystemStore";
 import { FILE_ICONS, colorFor, kindFromMimeType } from "./file-meta";
@@ -20,25 +11,38 @@ export function FileCard({
   layout = "grid",
   active,
   onClick,
+  id,
 }: {
   file: FileItem;
   layout?: "grid" | "row";
   active?: boolean;
   onClick?: () => void;
+  id?: string;
 }) {
   const { open } = useFilePreview();
   const kind = kindFromMimeType(file.mimeType);
   const Icon = FILE_ICONS[kind];
-  const showMediaPreview =
-    file.url !== undefined &&
-    (file.previewType === "image" || file.previewType === "video");
+  // Todo: For thumbnail previews, fetch a presigned URL via
+  // getFileStreamUrl(file.id) once `file.url` is unresolved, then show
+  // <FilePreview url={...} previewType={...}/> instead of the icon.
+  // For now we resolve the mime type from the extension and show the icon.
+  const showMediaPreview = false;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open(file);
+    }
+  };
 
   if (layout === "row") {
     return (
       <article
         onClick={onClick}
+        id={id}
+        aria-label={file.name}
         className={cn(
-          "group flex justify-between md:grid w-full md:grid-cols-[1fr_140px_120px_40px] items-center gap-4 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors last:border-0",
+          "group flex justify-between md:grid w-full md:grid-cols-[1fr_120px_160px_80px_40px] items-center gap-4 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors last:border-0",
           active ? "bg-primary/5" : "hover:bg-accent/60",
           onClick && "cursor-pointer",
         )}
@@ -58,6 +62,7 @@ export function FileCard({
           </div>
           <span className="truncate font-medium">{file.name}</span>
         </div>
+        <div className="">{/* // Todo: Add Avatar Here */}</div>
         <div className="text-muted-foreground hidden md:block">
           {file.updatedAt}
         </div>
@@ -76,9 +81,13 @@ export function FileCard({
   return (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={active ? 0 : -1}
+      aria-label={`${file.name}, ${kind}`}
+      aria-pressed={active}
       onClick={onClick}
       onDoubleClick={() => open(file)}
+      onKeyDown={handleKeyDown}
+      id={id}
       className={cn(
         "group relative w-full overflow-hidden rounded-lg border bg-card p-2 text-left transition-all",
         "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5",
@@ -100,7 +109,7 @@ export function FileCard({
       </div>
 
       {/* Preview */}
-      <div className="relative mt-2 aspect-[16/10] w-full overflow-hidden rounded-md bg-muted/40">
+      <div className="relative mt-2 flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-muted/60 to-muted/20">
         <FilePreview
           url={showMediaPreview ? file.url : undefined}
           previewType={file.previewType}
@@ -109,11 +118,11 @@ export function FileCard({
         {!showMediaPreview && (
           <div
             className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-xl",
+              "flex h-16 w-16 items-center justify-center rounded-2xl shadow-sm transition-transform group-hover:scale-105 sm:h-20 sm:w-20",
               colorFor(kind),
             )}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-8 w-8 sm:h-10 sm:w-10" />
           </div>
         )}
       </div>

@@ -43,7 +43,8 @@ import type {
   FileItem,
   FilePreviewType,
 } from "@/store/useFileSystemStore";
-import { kindFromMimeType } from "./drive/file-meta";
+import { kindFromMimeType, previewTypeFromMimeType } from "./drive/file-meta";
+import { getFileStreamUrl } from "@/features/dashboard/api/file.api";
 import { toast } from "react-toastify";
 
 export type PreviewKind =
@@ -85,9 +86,39 @@ const PreviewCtx = createContext<Ctx | null>(null);
 
 export function FilePreviewProvider({ children }: { children: ReactNode }) {
   const [file, setFile] = useState<PreviewFile | null>(null);
+
+  const open = useCallback((f: FileItem) => {
+    // Show the dialog instantly with what we know (name, kind…).
+    setFile(toPreviewFile(f));
+
+    // Fetch the real inline preview URL ({{BASE_URL}}/files/:id/preview) and
+    // swap it in once it resolves, so images/videos/audio/pdf load lazily.
+    void getFileStreamUrl(f.id)
+      .then((result) => {
+        if (!result.success) return;
+
+        const { url, mimeType } = result.data;
+
+        setFile((current) => {
+          if (!current || current.id !== f.id) return current;
+
+          return {
+            ...current,
+            url,
+            kind: kindFromMimeType(mimeType),
+            previewType: previewTypeFromMimeType(mimeType),
+          };
+        });
+      })
+      .catch(() => {
+        // Keep whatever the caller already provided; the viewer will fall
+        // back to the kind icon / demo content.
+      });
+  }, []);
+
   const value = useMemo<Ctx>(
-    () => ({ open: (f) => setFile(toPreviewFile(f)), close: () => setFile(null) }),
-    [],
+    () => ({ open, close: () => setFile(null) }),
+    [open],
   );
   return (
     <PreviewCtx.Provider value={value}>

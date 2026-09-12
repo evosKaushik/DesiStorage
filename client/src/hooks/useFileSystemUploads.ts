@@ -96,7 +96,7 @@ export function useFileSystemUploads() {
         return null;
       }
 
-      const { uploadId, url } = presigned.data;
+      const { fileId, url } = presigned.data;
 
       const uploadResult = await uploadFileToStorage(url, file);
 
@@ -109,7 +109,7 @@ export function useFileSystemUploads() {
         return null;
       }
 
-      const completed = await completeUploadApi(uploadId);
+      const completed = await completeUploadApi(fileId);
 
       if (!completed.success) {
         showToastWithDescription.error({

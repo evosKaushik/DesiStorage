@@ -2,23 +2,28 @@ import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FolderItem } from "@/store/useFileSystemStore";
 import FileItemContextMenu from "../FileItemContextMenu";
+import { ShimmerImage } from "@/components/ShimmerImage";
 
 export function FolderCard({
   folder,
   layout = "grid",
   active,
   onClick,
+  id,
 }: {
   folder: FolderItem;
   layout?: "grid" | "row";
   active?: boolean;
   onClick?: () => void;
+  id?: string;
 }) {
   if (layout === "row") {
     return (
       <div
         role="button"
-        tabIndex={0}
+        tabIndex={active ? 0 : -1}
+        aria-label={folder.name}
+        aria-pressed={active}
         onClick={onClick}
         onKeyDown={(e) => {
           if ((e.key === "Enter" || e.key === " ") && onClick) {
@@ -26,8 +31,9 @@ export function FolderCard({
             onClick();
           }
         }}
+        id={id}
         className={cn(
-          "group flex justify-between md:grid w-full md:grid-cols-[1fr_140px_120px_40px] items-center gap-4 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors last:border-0",
+          "group flex justify-between md:grid w-full md:grid-cols-[1fr_120px_160px_80px_40px] items-center gap-4 border-b border-border/40 px-4 py-2.5 text-left text-sm transition-colors last:border-0 focus-visible:outline-none",
           active ? "bg-primary/5" : "hover:bg-accent/60",
           onClick && "cursor-pointer",
         )}
@@ -37,6 +43,9 @@ export function FolderCard({
             <Folder className="h-4 w-4" fill="currentColor" fillOpacity={0.1} />
           </div>
           <span className="truncate font-medium">{folder.name}</span>
+        </div>
+        <div className="">
+     {/* // Todo: Add Avatar Here */}
         </div>
         <div className="text-muted-foreground hidden md:block">
           {folder.updatedAt}
@@ -54,7 +63,9 @@ export function FolderCard({
   return (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={active ? 0 : -1}
+      aria-label={folder.name}
+      aria-pressed={active}
       onClick={onClick}
       onKeyDown={(e) => {
         if ((e.key === "Enter" || e.key === " ") && onClick) {
@@ -62,6 +73,7 @@ export function FolderCard({
           onClick();
         }
       }}
+      id={id}
       className={cn(
         "group relative flex w-full flex-col overflow-hidden rounded-lg border bg-card p-1 text-left transition-all",
         "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5",
@@ -87,9 +99,13 @@ export function FolderCard({
       </div>
 
       {/* Folder preview */}
-      <div className="relative mt-2 flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-md bg-muted/40">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Folder className="h-6 w-6" fill="currentColor" fillOpacity={0.1} />
+      <div className="relative mt-2 flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-muted/60 to-muted/20">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm transition-transform group-hover:scale-105 sm:h-20 sm:w-20">
+          <Folder
+            className="h-8 w-8 sm:h-10 sm:w-10"
+            fill="currentColor"
+            fillOpacity={0.1}
+          />
         </div>
       </div>
     </div>
