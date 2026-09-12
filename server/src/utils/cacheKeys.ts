@@ -20,3 +20,6 @@ export const passwordResetCooldownKey = (userId: string): string =>
   `password-reset:cooldown:${userId}`;
 
 export const uploadIdKey = (uploadId: string) => `upload:${uploadId}`;
+
+export const uploadAbortedKey = (uploadId: string) =>
+  `upload:${uploadId}:aborted`;

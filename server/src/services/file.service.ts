@@ -3,16 +3,21 @@ import { Types } from "mongoose";
 import type { GetUploadPresignedUrlBody } from "../schemas/file.schema.js";
 
 import {
+  deleteFileObject,
   generatePresignedReadUrl,
   generatePresignedUploadUrl,
   getFileStorageKey,
   verifyUpload,
 } from "../utils/awsS3.js";
 
-import { redisDelete, redisGetJson, redisSetJson } from "../utils/redis.js";
+import {
+  redisGetDelJson,
+  redisGetJson,
+  redisSetJson,
+} from "../utils/redis.js";
 
-import { uploadIdKey } from "../utils/cacheKeys.js";
-import { ONE_HOUR } from "../constants/constant.js";
+import { uploadAbortedKey, uploadIdKey } from "../utils/cacheKeys.js";
+import { ONE_HOUR, fileBaseNameRegex } from "../constants/constant.js";
 import { ApiError } from "../utils/ApiError.js";
 
 import Folder from "../models/folder.model.js";
@@ -35,6 +40,36 @@ interface GetFilePresignedAccessParameter {
   userId: string;
   fileId: string;
   disposition: "inline" | "attachment";
+}
+
+interface RenameFileParameter {
+  userId: string;
+  fileId: string;
+  name: string;
+}
+
+interface AbortFileUploadParameter {
+  userId: string;
+  fileId: string;
+}
+
+interface TrashFileParameter {
+  userId: string;
+  fileId: string;
+}
+
+interface RestoreFileParameter {
+  userId: string;
+  fileId: string;
+}
+
+interface DeleteFilePermanentlyParameter {
+  userId: string;
+  fileId: string;
+}
+
+interface GetTrashedFilesParameter {
+  userId: string;
 }
 
 const getContentDisposition = (
@@ -125,24 +160,26 @@ const completeFileUpload = async ({
 
   const redisKey = uploadIdKey(fileId);
 
-  let cachedData: PendingUpload | null;
+  let claimedData: PendingUpload | null;
 
+  // GETDEL atomically claims the upload session so a concurrent abort
+  // cannot clean up the object out from under a completing upload.
   try {
-    cachedData = await redisGetJson<PendingUpload>(redisKey);
+    claimedData = await redisGetDelJson<PendingUpload>(redisKey);
   } catch {
     throw new ApiError(503, "Upload session store is unavailable");
   }
 
-  if (!cachedData) {
+  if (!claimedData) {
     throw new ApiError(400, "Upload session expired or invalid");
   }
 
-  if (cachedData.userId !== userId) {
+  if (claimedData.userId !== userId) {
     throw new ApiError(403, "You can only complete your own uploads");
   }
 
   const existingFolder = await Folder.exists({
-    _id: cachedData.parentId,
+    _id: claimedData.parentId,
     userId,
   });
 
@@ -152,25 +189,25 @@ const completeFileUpload = async ({
 
   const entry = await verifyUpload(
     fileId,
-    cachedData.expectedSize,
-    cachedData.mimeType,
+    claimedData.expectedSize,
+    claimedData.mimeType,
   );
 
   const file = await File.create({
     _id: new Types.ObjectId(fileId),
-    name: cachedData.name,
-    extension: cachedData.extension,
+    name: claimedData.name,
+    extension: claimedData.extension,
     size: entry.actualSize,
     mimeType: entry.mimeType,
     userId: new Types.ObjectId(userId),
-    parentFolderId: new Types.ObjectId(cachedData.parentId),
+    parentFolderId: new Types.ObjectId(claimedData.parentId),
   });
 
   try {
     await Promise.all([
       Folder.updateOne(
         {
-          _id: cachedData.parentId,
+          _id: claimedData.parentId,
           userId,
         },
         {
@@ -197,18 +234,6 @@ const completeFileUpload = async ({
     });
 
     throw error;
-  }
-
-  // Redis is temporary state.
-  // DB + S3 are already successful, so Redis cleanup
-  // failure should not make the upload look failed.
-  try {
-    await redisDelete(redisKey);
-  } catch (error) {
-    console.error("Failed to delete pending upload from Redis:", {
-      fileId,
-      error,
-    });
   }
 
   return toFileView(file);
@@ -260,8 +285,312 @@ const getFilePresignedAccess = async ({
   };
 };
 
+const renameFile = async ({
+  userId,
+  fileId,
+  name,
+}: RenameFileParameter): Promise<FileView> => {
+  if (!Types.ObjectId.isValid(fileId)) {
+    throw new ApiError(400, "Invalid file ID");
+  }
+
+  const dotIndex = name.lastIndexOf(".");
+  if (dotIndex === -1) {
+    throw new ApiError(400, "File name must include an extension");
+  }
+
+  const baseName = name.slice(0, dotIndex);
+  const requestedExtension = name.slice(dotIndex).toLowerCase();
+
+  if (!fileBaseNameRegex.test(baseName)) {
+    throw new ApiError(400, "File name contains invalid characters");
+  }
+
+  const file = await File.findFileByOwner(
+    new Types.ObjectId(userId),
+    new Types.ObjectId(fileId),
+  );
+
+  if (!file) {
+    throw new ApiError(404, "File not found");
+  }
+
+  if (file.deletedAt) {
+    throw new ApiError(400, "Cannot rename a file in Trash");
+  }
+
+  if (requestedExtension !== file.extension.toLowerCase()) {
+    throw new ApiError(400, "File extension cannot be changed");
+  }
+
+  const duplicateId = file._id as Types.ObjectId;
+
+  const duplicate = await File.exists({
+    _id: { $ne: duplicateId },
+    userId: file.userId,
+    parentFolderId: file.parentFolderId,
+    name: baseName,
+    extension: file.extension,
+    deletedAt: null,
+  });
+
+  if (duplicate) {
+    throw new ApiError(409, "A file with this name already exists");
+  }
+
+  const updatedFile = await File.findByIdAndUpdate(
+    file._id,
+    { name: baseName },
+    { returnDocument: "after", runValidators: true },
+  );
+
+  if (!updatedFile) {
+    throw new ApiError(404, "File not found");
+  }
+
+  return toFileView(updatedFile);
+};
+
+const resolveHandledUpload = async (
+  userId: string,
+  fileId: string,
+): Promise<"aborted" | "completed" | "not-found"> => {
+  let alreadyAborted: { abortedAt: number } | null = null;
+
+  try {
+    alreadyAborted = await redisGetJson<{ abortedAt: number }>(
+      uploadAbortedKey(fileId),
+    );
+  } catch {
+    throw new ApiError(503, "Upload session store is unavailable");
+  }
+
+  if (alreadyAborted) {
+    return "aborted";
+  }
+
+  const completed = await File.exists({
+    _id: new Types.ObjectId(fileId),
+    userId,
+  });
+
+  if (completed) {
+    return "completed";
+  }
+
+  return "not-found";
+};
+
+const abortFileUpload = async ({
+  userId,
+  fileId,
+}: AbortFileUploadParameter): Promise<void> => {
+  if (!Types.ObjectId.isValid(fileId)) {
+    throw new ApiError(400, "Invalid file ID");
+  }
+
+  const redisKey = uploadIdKey(fileId);
+
+  let existing: PendingUpload | null;
+
+  try {
+    existing = await redisGetJson<PendingUpload>(redisKey);
+  } catch {
+    throw new ApiError(503, "Upload session store is unavailable");
+  }
+
+  if (existing && existing.userId !== userId) {
+    // Reveal nothing about uploads that are not owned by the caller.
+    // A peek (not a claim) leaves a foreign session untouched.
+    throw new ApiError(404, "Upload session not found or expired");
+  }
+
+  let claimed: PendingUpload | null;
+
+  try {
+    // GETDEL atomically claims the upload session so a concurrent
+    // completion cannot finalize an object we are about to delete.
+    claimed = await redisGetDelJson<PendingUpload>(redisKey);
+  } catch {
+    throw new ApiError(503, "Upload session store is unavailable");
+  }
+
+  if (!claimed) {
+    const outcome = await resolveHandledUpload(userId, fileId);
+
+    if (outcome === "aborted") {
+      throw new ApiError(400, "Upload already aborted");
+    }
+
+    if (outcome === "completed") {
+      throw new ApiError(409, "Upload already completed");
+    }
+
+    throw new ApiError(404, "Upload session not found or expired");
+  }
+
+  if (claimed.userId !== userId) {
+    throw new ApiError(404, "Upload session not found or expired");
+  }
+
+  try {
+    await deleteFileObject(fileId);
+  } catch (error) {
+    // The session was claimed, so restore it to allow a retry.
+    try {
+      await redisSetJson(redisKey, claimed, ONE_HOUR);
+    } catch {
+      // Restoring failed; surface the original storage error.
+      console.error("Failed to restore pending upload after abort failure:", {
+        fileId,
+        error,
+      });
+    }
+
+    throw error;
+  }
+
+  try {
+    await redisSetJson(
+      uploadAbortedKey(fileId),
+      { abortedAt: Date.now() },
+      ONE_HOUR,
+    );
+  } catch {
+    throw new ApiError(503, "Upload session store is unavailable");
+  }
+};
+
+const trashFile = async ({
+  userId,
+  fileId,
+}: TrashFileParameter): Promise<void> => {
+  if (!Types.ObjectId.isValid(fileId)) {
+    throw new ApiError(400, "Invalid file ID");
+  }
+
+  const file = await File.findFileByOwner(userId, fileId);
+
+  if (!file) {
+    throw new ApiError(404, "File not found");
+  }
+
+  if (file.deletedAt) {
+    throw new ApiError(400, "File is already in Trash");
+  }
+
+  await File.updateOne(
+    { _id: file._id as Types.ObjectId },
+    { deletedAt: new Date() },
+  );
+};
+
+const restoreFile = async ({
+  userId,
+  fileId,
+}: RestoreFileParameter): Promise<void> => {
+  if (!Types.ObjectId.isValid(fileId)) {
+    throw new ApiError(400, "Invalid file ID");
+  }
+
+  const file = await File.findFileByOwner(userId, fileId);
+
+  if (!file) {
+    throw new ApiError(404, "File not found");
+  }
+
+  if (!file.deletedAt) {
+    throw new ApiError(400, "File is not in Trash");
+  }
+
+  const duplicate = await File.exists({
+    _id: { $ne: file._id as Types.ObjectId },
+    userId: file.userId,
+    parentFolderId: file.parentFolderId,
+    name: file.name,
+    extension: file.extension,
+    deletedAt: null,
+  });
+
+  if (duplicate) {
+    throw new ApiError(
+      409,
+      "A file with this name already exists in this folder",
+    );
+  }
+
+  await File.updateOne(
+    { _id: file._id as Types.ObjectId },
+    { deletedAt: null },
+  );
+};
+
+const deleteFilePermanently = async ({
+  userId,
+  fileId,
+}: DeleteFilePermanentlyParameter): Promise<void> => {
+  if (!Types.ObjectId.isValid(fileId)) {
+    throw new ApiError(400, "Invalid file ID");
+  }
+
+  const file = await File.findFileByOwner(userId, fileId);
+
+  if (!file) {
+    throw new ApiError(404, "File not found");
+  }
+
+  if (!file.deletedAt) {
+    throw new ApiError(
+      400,
+      "File must be in Trash before permanent deletion",
+    );
+  }
+
+  // Delete the S3 object first so a failure never leaves an orphan object.
+  // A DB failure afterwards leaves the soft-deleted record, which is safe
+  // to retry (deleting a missing object is idempotent).
+  await deleteFileObject(fileId);
+
+  await File.deleteOne({ _id: file._id as Types.ObjectId });
+};
+
+const getTrashedFiles = async ({
+  userId,
+}: GetTrashedFilesParameter): Promise<FileView[]> => {
+  const trashedFiles = await File.findTrashedFiles(userId);
+
+  return trashedFiles.map(
+    (file) => toFileView(file as IFile & { _id: Types.ObjectId }),
+  );
+};
+
+const emptyTrash = async ({
+  userId,
+}: GetTrashedFilesParameter): Promise<void> => {
+  const trashedFiles = await File.findTrashedFiles(userId);
+
+  // Delete objects first so a mid-way failure never leaves orphan objects.
+  // Remaining DB records stay soft-deleted and a retry converges.
+  for (const file of trashedFiles) {
+    const fileId = file._id?.toString();
+
+    if (fileId) {
+      await deleteFileObject(fileId);
+    }
+  }
+
+  await File.deleteMany({ userId, deletedAt: { $ne: null } });
+};
+
 export {
   getUploadPresignedUrl,
   completeFileUpload,
   getFilePresignedAccess,
+  renameFile,
+  abortFileUpload,
+  trashFile,
+  restoreFile,
+  deleteFilePermanently,
+  getTrashedFiles,
+  emptyTrash,
 };
