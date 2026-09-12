@@ -1,10 +1,10 @@
 "use client"
-import { FileCard } from "./FileCard";
+import { DriveItem } from "./DriveItem";
 import { FileTable } from "./FileTable";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
 
-export function RecentTimeline({
+export const RecentTimeline = ({
   selected,
   onSelect,
   view,
@@ -12,7 +12,7 @@ export function RecentTimeline({
   selected: string | null;
   onSelect: (id: string) => void;
   view: "grid" | "list";
-}) {
+}) => {
   const files = useFileSystemStore(useShallow(selectFiles));
 
   const groups = [
@@ -36,9 +36,9 @@ export function RecentTimeline({
           {view === "grid" ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {g.items.map((f) => (
-                <FileCard
+                <DriveItem
                   key={f.id}
-                  file={f}
+                  item={f}
                   active={selected === f.id}
                   onClick={() => onSelect(f.id)}
                 />
@@ -55,4 +55,6 @@ export function RecentTimeline({
       ))}
     </div>
   );
-}
+};
+
+export default RecentTimeline;

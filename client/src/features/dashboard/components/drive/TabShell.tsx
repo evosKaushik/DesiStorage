@@ -3,17 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function TabShell({
-  crumbs,
-  title,
-  subtitle,
-  view,
-  setView,
-  actions,
-  hideViewSwitch,
-  openPicker,
-  children,
-}: {
+type TabShellProps = {
   crumbs: string[];
   title: string;
   subtitle: string;
@@ -21,9 +11,24 @@ export function TabShell({
   setView: (v: "grid" | "list") => void;
   actions?: ReactNode;
   hideViewSwitch?: boolean;
+  /** Hides the header "Upload" button (e.g. Trash, where uploading makes no sense). */
+  hideUpload?: boolean;
   openPicker: () => void;
   children: ReactNode;
-}) {
+};
+
+const TabShell = ({
+  crumbs,
+  title,
+  subtitle,
+  view,
+  setView,
+  actions,
+  hideViewSwitch,
+  hideUpload = false,
+  openPicker,
+  children,
+}: TabShellProps) => {
   return (
     <>
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -47,21 +52,25 @@ export function TabShell({
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         </div>
-        <div className="flex max-lg:w-full justify-between items-center gap-2">
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={openPicker}
-            >
-              <Upload className="h-4 w-4" /> Upload
-            </Button>
-            {actions}
-          </div>
+        <div className="flex max-lg:w-full items-center justify-between gap-2">
+          {(!hideUpload || actions) && (
+            <div className="flex items-center gap-2">
+              {!hideUpload && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={openPicker}
+                >
+                  <Upload className="h-4 w-4" /> Upload
+                </Button>
+              )}
+              {actions}
+            </div>
+          )}
           {/* Layout Switch */}
           {!hideViewSwitch && (
-            <div className="ml-1 hidden xs:flex overflow-hidden rounded-lg border border-border/60">
+            <div className="ml-1 hidden overflow-hidden rounded-lg border border-border/60 xs:flex">
               <button
                 onClick={() => setView("grid")}
                 className={cn(
@@ -94,4 +103,7 @@ export function TabShell({
       {children}
     </>
   );
-}
+};
+
+export default TabShell;
+export { TabShell };

@@ -37,9 +37,16 @@ import {
   Link2Icon,
 } from "lucide-react";
 import { useState } from "react";
+import useTrashStore from "@/store/useTrashStore";
 
-const FileItemContentBody = ({ onRename }: { onRename: () => void }) => {
-  return (
+const FileItemContentBody = ({
+  onRename,
+  onTrash,
+}: {
+  onRename: () => void;
+  onTrash?: () => void;
+}) => {
+    return (
     <>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
@@ -112,7 +119,10 @@ const FileItemContentBody = ({ onRename }: { onRename: () => void }) => {
 
       <DropdownMenuSeparator />
 
-      <DropdownMenuItem className="text-destructive focus:text-destructive">
+      <DropdownMenuItem
+        onClick={onTrash}
+        className="text-destructive focus:text-destructive"
+      >
         <Trash2 className="mr-2 h-4 w-4" />
         Move to trash
         <span className="ml-auto text-xs">Delete</span>
@@ -129,6 +139,7 @@ const FileItemContextMenu = ({
   selectedItemName: string;
 }) => {
   const renameItem = useFileSystemStore((state) => state.renameItemById);
+  const moveToTrash = useTrashStore((state) => state.moveToTrash);
 
   const [renameOpen, setRenameOpen] = useState(false);
 
@@ -149,7 +160,10 @@ const FileItemContextMenu = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-56">
-          <FileItemContentBody onRename={() => setRenameOpen(true)} />
+          <FileItemContentBody
+            onRename={() => setRenameOpen(true)}
+            onTrash={() => void moveToTrash(selectedItemId)}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
 

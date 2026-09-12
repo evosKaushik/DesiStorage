@@ -1,17 +1,13 @@
 import { Home, HardDrive, TrendingUp, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FileCard } from "./FileCard";
+import { DriveItem } from "./DriveItem";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
 import { getStorageDetails } from "@/hooks/useStorageDetails";
 
-export function HomeTab({
-  setSelected,
-}: {
-  setSelected: (id: string | null) => void;
-}) {
+export const HomeTab = ({ setSelected }: { setSelected: (id: string | null) => void; }) => {
   const user = useUserStore(selectUser);
   const files = useFileSystemStore(useShallow(selectFiles));
 
@@ -67,9 +63,9 @@ export function HomeTab({
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {suggestions.map((f) => (
-            <FileCard
+            <DriveItem
               key={f.id}
-              file={f}
+              item={f}
               active={false}
               onClick={() => setSelected(f.id)}
             />
@@ -120,9 +116,9 @@ export function HomeTab({
       </section>
     </>
   );
-}
+};
 
-function StatCard({
+const StatCard = ({
   icon: Icon,
   label,
   value,
@@ -134,7 +130,7 @@ function StatCard({
   value: string;
   hint: string;
   tone?: "primary" | "emerald" | "violet";
-}) {
+}) => {
   const tones = {
     primary: "bg-primary/10 text-primary",
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -159,4 +155,4 @@ function StatCard({
       <div className="mt-0.5 text-xs text-muted-foreground">{hint}</div>
     </div>
   );
-}
+};

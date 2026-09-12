@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 /**
  * Thin client wrapper that adapts react-toastify to the current next-themes

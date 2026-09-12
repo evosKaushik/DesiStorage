@@ -20,7 +20,7 @@ import Logo from "@/components/Logo";
 import type { DashboardTab } from "../types/dashboard-tabs";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import { getStorageDetails } from "@/hooks/useStorageDetails";
-import { useFileSystemUploads } from "@/hooks/useFileSystemUploads";
+import { useUploads } from "./UploadContext";
 
 const NAV: {
   id: DashboardTab;
@@ -39,7 +39,7 @@ const NAV: {
 
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { openPicker } = useFileSystemUploads();
+  const { openPicker } = useUploads();
   const user = useUserStore(selectUser);
 
   const { formattedStorageLimit, formattedStorageUsed, percentageUsed } =

@@ -1,31 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FileCard } from "./FileCard";
-import { FolderCard } from "./FolderCard";
+import { ArrowUpAZIcon } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, {
   selectFiles,
   selectFolders,
   type FileSystemItem,
 } from "@/store/useFileSystemStore";
-import { ArrowUpAZIcon } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import DialogWithInput from "@/components/DialogWithInput";
+import useTrashStore from "@/store/useTrashStore";
 import { FileItemContentBody } from "../FileItemContextMenu";
+import { DriveItem } from "./DriveItem";
 
 const ROW_HEADER_CLASSES =
-  "flex justify-between md:grid md:grid-cols-[1fr_120px_160px_80px_40px] gap-4 border-b border-border/60 bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+  "grid grid-cols-[minmax(0,1fr)_80px_40px] items-center gap-3 border-b border-border/60 bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid-cols-[1fr_120px_160px_80px_40px]";
 
-// Matches the grid template: minmax(240px, 1fr) + gap-4 (16px).
-const CARD_MIN_WIDTH = 240;
+// Matches the grid template: minmax(200px, 1fr) + gap-4 (16px).
+const CARD_MIN_WIDTH = 200;
 const GRID_GAP = 16;
 
-export function FileSystemSection({
+const FileSystemSection = ({
   view,
   selected,
   onSelect,
@@ -35,12 +35,13 @@ export function FileSystemSection({
   selected: string | null;
   onSelect: (id: string) => void;
   emptyLabel?: string;
-}) {
+}) => {
   const folders = useFileSystemStore(useShallow(selectFolders));
   const files = useFileSystemStore(useShallow(selectFiles));
 
   const renameItemById = useFileSystemStore((state) => state.renameItemById);
   const removeItem = useFileSystemStore((state) => state.removeItem);
+  const moveToTrash = useTrashStore((state) => state.moveToTrash);
   const [renameTarget, setRenameTarget] = useState<{
     id: string;
     name: string;
@@ -132,57 +133,41 @@ export function FileSystemSection({
       moveSelection("up");
     } else if (e.key === "Delete" && selected) {
       e.preventDefault();
-      removeItem(selected);
-      // Todo: Wire to the move-to-trash API once it exists.
+      const item = items.find((it) => it.id === selected);
+
+      if (item?.type === "file") {
+        void moveToTrash(item.id);
+      } else if (item) {
+        // Folders have no trash support yet — just hide locally.
+        removeItem(selected);
+      }
     }
   };
 
-  const renderCard = (item: FileSystemItem) => {
-    const common = {
-      id: `fs-item-${item.id}`,
-      active: selected === item.id,
-      onClick: () => {
-        onSelect(item.id);
-        focusSelected();
-      },
-    };
-
-    if (item.type === "folder") {
-      return (
-        <ContextMenu key={item.id}>
-          <ContextMenuTrigger>
-            <FolderCard
-              {...common}
-              folder={item}
-              layout={view === "grid" ? "grid" : "row"}
-            />
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <FileItemContentBody
-              onRename={() => setRenameTarget({ id: item.id, name: item.name })}
-            />
-          </ContextMenuContent>
-        </ContextMenu>
-      );
-    }
-
-    return (
-      <ContextMenu key={item.id}>
-        <ContextMenuTrigger>
-          <FileCard
-            {...common}
-            file={item}
-            layout={view === "grid" ? "grid" : "row"}
-          />
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <FileItemContentBody
-            onRename={() => setRenameTarget({ id: item.id, name: item.name })}
-          />
-        </ContextMenuContent>
-      </ContextMenu>
-    );
-  };
+  const renderItem = (item: FileSystemItem) => (
+    <ContextMenu key={item.id}>
+      <ContextMenuTrigger>
+        <DriveItem
+          id={`fs-item-${item.id}`}
+          item={item}
+          active={selected === item.id}
+          layout={view === "grid" ? "grid" : "row"}
+          onClick={() => {
+            onSelect(item.id);
+            focusSelected();
+          }}
+        />
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <FileItemContentBody
+          onRename={() => setRenameTarget({ id: item.id, name: item.name })}
+          onTrash={
+            item.type === "file" ? () => void moveToTrash(item.id) : undefined
+          }
+        />
+      </ContextMenuContent>
+    </ContextMenu>
+  );
 
   if (folders.length === 0 && files.length === 0) {
     return (
@@ -197,11 +182,9 @@ export function FileSystemSection({
       <div onKeyDown={handleKeyDown}>
         <div
           ref={gridRef}
-          className="mt-6 grid grid-cols-1 xs:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4"
+          className="mt-6 grid grid-cols-1 gap-4 xs:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
         >
-          {items.map((item) => (
-            <div key={item.id}>{renderCard(item)}</div>
-          ))}
+          {items.map(renderItem)}
         </div>
 
         <DialogWithInput
@@ -233,14 +216,14 @@ export function FileSystemSection({
           <span>Name</span>
           <ArrowUpAZIcon />
         </div>
-        <div className="hidden md:block">Owner</div>
+        <div>Owner</div>
         <div className="hidden md:block">Modified</div>
         <div className="hidden md:block">Size</div>
         <div>More</div>
       </div>
-      {items.map((item) => (
-        <div key={item.id}>{renderCard(item)}</div>
-      ))}
+      {items.map(renderItem)}
     </div>
   );
-}
+};
+
+export { FileSystemSection };

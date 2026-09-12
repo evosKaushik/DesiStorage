@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
-import { useFileSystemUploads } from "@/hooks/useFileSystemUploads";
+import { useUploads } from "@/features/dashboard/components/UploadContext";
 import useFileSystemStore, { selectFiles } from "@/store/useFileSystemStore";
 import useUserStore, { selectUser } from "@/store/useUserStore";
 import { formatBytes } from "@/lib/format";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<string | null>(null);
   const { query } = useDashboardSearch();
-  const { openPicker } = useFileSystemUploads();
+  const { openPicker } = useUploads();
   const storeFiles = useFileSystemStore(useShallow(selectFiles));
   const loadFolder = useFileSystemStore((s) => s.loadFolder);
   const user = useUserStore(selectUser);

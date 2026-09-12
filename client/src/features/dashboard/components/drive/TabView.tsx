@@ -1,13 +1,12 @@
-import { FolderPlus, RotateCcw, Trash2 } from "lucide-react";
+import { FolderPlus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import type { DashboardTab } from "@/features/dashboard/types/dashboard-tabs";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectItems } from "@/store/useFileSystemStore";
 import { TabShell } from "./TabShell";
 import { FileSystemSection } from "./FilesSection";
+import { TrashView } from "./TrashView";
 
 const HomeTab = dynamic(() => import("./HomeTab").then((m) => m.HomeTab));
 const RecentTimeline = dynamic(() =>
@@ -17,15 +16,7 @@ const SharedLinks = dynamic(() =>
   import("./SharedLinks").then((m) => m.SharedLinks),
 );
 
-export function TabView({
-  tab,
-  query,
-  view,
-  setView,
-  selected,
-  setSelected,
-  openPicker,
-}: {
+type TabViewProps = {
   tab: DashboardTab;
   query: string;
   view: "grid" | "list";
@@ -33,7 +24,17 @@ export function TabView({
   selected: string | null;
   setSelected: (id: string | null) => void;
   openPicker: () => void;
-}) {
+};
+
+const TabView = ({
+  tab,
+  query,
+  view,
+  setView,
+  selected,
+  setSelected,
+  openPicker,
+}: TabViewProps) => {
   const items = useFileSystemStore(useShallow(selectItems));
 
   if (tab === "home") return <HomeTab setSelected={setSelected} />;
@@ -120,24 +121,10 @@ export function TabView({
         subtitle="Items in Trash are deleted forever after 30 days."
         view={view}
         setView={setView}
+        hideUpload
         openPicker={openPicker}
-        actions={
-          <>
-            <Button variant="outline" size="sm">
-              <RotateCcw className="mr-2 h-4 w-4" /> Restore all
-            </Button>
-            <Button size="sm" variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" /> Empty trash
-            </Button>
-          </>
-        }
       >
-        <FileSystemSection
-          view={view}
-          selected={selected}
-          onSelect={setSelected}
-          emptyLabel="Nothing in the trash."
-        />
+        <TrashView view={view} />
       </TabShell>
     );
   }
@@ -174,4 +161,6 @@ export function TabView({
       </section>
     </TabShell>
   );
-}
+};
+
+export { TabView };

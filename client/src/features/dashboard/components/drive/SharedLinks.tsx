@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { SHARE_LINKS } from "@/features/dashboard/data/dashboard";
 import { FILE_ICONS, colorFor } from "./file-meta";
 
-export function SharedLinks({ query }: { query: string }) {
+export const SharedLinks = ({ query }: { query: string }) => {
   const filtered = SHARE_LINKS.filter((l) =>
     l.name.toLowerCase().includes(query.toLowerCase()),
   );
@@ -77,4 +77,6 @@ export function SharedLinks({ query }: { query: string }) {
       )}
     </div>
   );
-}
+};
+
+export default SharedLinks;

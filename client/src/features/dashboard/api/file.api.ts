@@ -1,5 +1,8 @@
 import axios from "axios";
 import { apiRequest } from "@/utils/api";
+import { axiosInstance } from "@/utils/axiosInstance";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 interface PresignedUrlResponse {
   fileId: string;
@@ -38,13 +41,51 @@ const completeUploadApi = (fileId: string) =>
     `/files/upload/${fileId}/complete`,
   );
 
+/**
+ * Cancels an in-flight upload: deletes the partial S3 object + session.
+ * The endpoint replies 204 with no body, so it bypasses the JSON envelope.
+ */
+const abortUploadApi = async (fileId: string): Promise<boolean> => {
+  try {
+    await axiosInstance.post(`/files/upload/${fileId}/abort`);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Best-effort abort that survives page teardown (tab close, refresh, SPA
+ * navigation). Uses a keepalive request so the partial object is cleaned
+ * even while the window is going away.
+ */
+const abortUploadsKeepalive = (fileIds: string[]) => {
+  for (const fileId of fileIds) {
+    const url = `${API_BASE}/api/v1/files/upload/${fileId}/abort`;
+
+    fetch(url, {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+    }).catch(() => {
+      // The page is going away; nothing actionable here.
+    });
+  }
+};
+
 // ---------------------------------------------------------------------------
 // Storage upload (presigned PUT)
 // ---------------------------------------------------------------------------
 
 export interface StorageUploadResult {
   success: boolean;
+  canceled?: boolean;
   message?: string;
+}
+
+export interface StorageUploadProgress {
+  loaded: number;
+  total: number;
 }
 
 /**
@@ -57,7 +98,14 @@ export interface StorageUploadResult {
 const uploadFileToStorage = async (
   presignedUrl: string,
   file: globalThis.File,
+  opts?: {
+    onProgress?: (p: StorageUploadProgress) => void;
+    signal?: AbortSignal;
+  },
 ): Promise<StorageUploadResult> => {
+  const controller = new AbortController();
+  const signal = opts?.signal ?? controller.signal;
+
   try {
     await axios.put(presignedUrl, file, {
       headers: {
@@ -65,10 +113,21 @@ const uploadFileToStorage = async (
       },
       withCredentials: false,
       maxRedirects: 0,
+      signal,
+      onUploadProgress: (progressEvent) => {
+        opts?.onProgress?.({
+          loaded: progressEvent.loaded ?? 0,
+          total: progressEvent.total ?? file.size,
+        });
+      },
     });
 
     return { success: true };
   } catch (error) {
+    if (axios.isCancel(error)) {
+      return { success: false, canceled: true, message: "Upload canceled" };
+    }
+
     let message = "The file failed to reach storage. Please try again.";
 
     if (axios.isAxiosError(error)) {
@@ -119,6 +178,8 @@ const getFileDownloadUrl = async (fileId: string) =>
   );
 
 export {
+  abortUploadApi,
+  abortUploadsKeepalive,
   completeUploadApi,
   getFileDownloadUrl,
   getFileStreamUrl,
