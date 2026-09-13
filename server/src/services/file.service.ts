@@ -10,11 +10,7 @@ import {
   verifyUpload,
 } from "../utils/awsS3.js";
 
-import {
-  redisGetDelJson,
-  redisGetJson,
-  redisSetJson,
-} from "../utils/redis.js";
+import { redisGetDelJson, redisGetJson, redisSetJson } from "../utils/redis.js";
 
 import { uploadAbortedKey, uploadIdKey } from "../utils/cacheKeys.js";
 import { ONE_HOUR, fileBaseNameRegex } from "../constants/constant.js";
@@ -469,18 +465,18 @@ const trashFile = async ({
     throw new ApiError(400, "Invalid file ID");
   }
 
-  const file = await File.findFileByOwner(userId, fileId);
+  const folder = await File.findFileByOwner(userId, fileId);
 
-  if (!file) {
+  if (!folder) {
     throw new ApiError(404, "File not found");
   }
 
-  if (file.deletedAt) {
+  if (folder.deletedAt) {
     throw new ApiError(400, "File is already in Trash");
   }
 
-  await File.updateOne(
-    { _id: file._id as Types.ObjectId },
+  await Folder.updateOne(
+    { _id: folder._id as Types.ObjectId },
     { deletedAt: new Date() },
   );
 };
@@ -540,10 +536,7 @@ const deleteFilePermanently = async ({
   }
 
   if (!file.deletedAt) {
-    throw new ApiError(
-      400,
-      "File must be in Trash before permanent deletion",
-    );
+    throw new ApiError(400, "File must be in Trash before permanent deletion");
   }
 
   // Delete the S3 object first so a failure never leaves an orphan object.
@@ -559,8 +552,8 @@ const getTrashedFiles = async ({
 }: GetTrashedFilesParameter): Promise<FileView[]> => {
   const trashedFiles = await File.findTrashedFiles(userId);
 
-  return trashedFiles.map(
-    (file) => toFileView(file as IFile & { _id: Types.ObjectId }),
+  return trashedFiles.map((file) =>
+    toFileView(file as IFile & { _id: Types.ObjectId }),
   );
 };
 

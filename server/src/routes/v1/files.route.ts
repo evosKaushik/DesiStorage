@@ -19,7 +19,6 @@ import {
   getUploadPresignedUrlHandler,
   renameFileHandler,
   restoreFileHandler,
-  trashFileHandler,
 } from "../../controllers/file.controller.js";
 
 const fileRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -54,43 +53,6 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     abortFileUploadHandler,
-  );
-  // Trashed Files listing + Empty Trash (static paths ahead of /:fileId)
-  app.get(
-    "/trashed",
-    {
-      preHandler: requireVerifiedEmail,
-    },
-    getTrashedFilesHandler,
-  );
-  app.delete(
-    "/trashed",
-    {
-      preHandler: requireVerifiedEmail,
-    },
-    emptyTrashHandler,
-  );
-  // Move a File to Trash (soft delete)
-  app.post(
-    "/:fileId/trash",
-    {
-      preHandler: requireVerifiedEmail,
-      schema: {
-        params: fileIdParamsSchema,
-      },
-    },
-    trashFileHandler,
-  );
-  // Restore a File from Trash
-  app.post(
-    "/:fileId/restore",
-    {
-      preHandler: requireVerifiedEmail,
-      schema: {
-        params: fileIdParamsSchema,
-      },
-    },
-    restoreFileHandler,
   );
   // Permanently delete a File (only allowed from Trash)
   app.delete(

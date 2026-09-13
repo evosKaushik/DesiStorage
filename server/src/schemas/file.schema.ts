@@ -45,6 +45,11 @@ export const fileIdParamsSchema = z.object({
   fileId: objectIdSchema,
 });
 
+export const itemQuerySchema = z.object({
+  fileId: objectIdSchema.optional(),
+  folderId: objectIdSchema.optional(),
+});
+
 export const renameFileNameSchema = z.object({
   name: z
     .string()
@@ -65,5 +70,6 @@ export type CompleteUploadParams = z.infer<typeof completeUploadParamsSchema>;
 
 export type FileIdParams = z.infer<typeof fileIdParamsSchema>;
 
-export type RenameFileNameBody = z.infer<typeof renameFileNameSchema>;
+export type ItemQueryParams = z.infer<typeof itemQuerySchema>;
 
+export type RenameFileNameBody = z.infer<typeof renameFileNameSchema>;

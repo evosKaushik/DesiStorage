@@ -8,11 +8,25 @@ export interface IFolder {
   size: number;
   parentFolderId: Types.ObjectId | null;
   userId: Types.ObjectId;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-type FolderModel = mongoose.Model<IFolder>;
+interface FolderModel extends mongoose.Model<IFolder> {
+  /** Folder owned by `userId` that are not in Trash. */
+  findActiveFolders(userId: Types.ObjectId | string): Promise<IFolder[]>;
+  /** Folder owned by `userId` that are in Trash (soft-deleted). */
+  findTrashedFolders(userId: Types.ObjectId | string): Promise<IFolder[]>;
+  /**
+   * A single folder owned by `userId`, regardless of its Trash state.
+   * Returns null when the folder does not exist or belongs to another user.
+   */
+  findFolderByOwner(
+    userId: Types.ObjectId | string,
+    folderId: Types.ObjectId | string,
+  ): Promise<IFolder | null>;
+}
 
 const folderSchema = new mongoose.Schema<IFolder, FolderModel>(
   {
@@ -22,10 +36,7 @@ const folderSchema = new mongoose.Schema<IFolder, FolderModel>(
       trim: true,
       minlength: [1, "Folder name cannot be empty"],
       maxlength: [255, "Folder name cannot exceed 255 characters"],
-      match: [
-        storageNameRegex,
-        "Folder name contains invalid characters",
-      ],
+      match: [storageNameRegex, "Folder name contains invalid characters"],
     },
 
     size: {
@@ -46,15 +57,39 @@ const folderSchema = new mongoose.Schema<IFolder, FolderModel>(
       default: null,
       ref: "Folder",
     },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-const Folder = mongoose.model<IFolder, FolderModel>(
-  "Folder",
-  folderSchema,
-);
+folderSchema.statics.findActiveFolders = function (
+  this: FolderModel,
+  userId: Types.ObjectId | string,
+): Promise<IFolder[]> {
+  return this.find({ userId, deletedAt: null }).exec();
+};
+
+folderSchema.statics.findTrashedFolders = function (
+  this: FolderModel,
+  userId: Types.ObjectId | string,
+): Promise<IFolder[]> {
+  return this.find({ userId, deletedAt: { $ne: null } }).exec();
+};
+
+folderSchema.statics.findFolderByOwner = function (
+  this: FolderModel,
+  userId: Types.ObjectId | string,
+  fileId: Types.ObjectId | string,
+): Promise<IFolder | null> {
+  return this.findOne({ _id: fileId, userId }).exec();
+};
+
+const Folder = mongoose.model<IFolder, FolderModel>("Folder", folderSchema);
 
 export default Folder;

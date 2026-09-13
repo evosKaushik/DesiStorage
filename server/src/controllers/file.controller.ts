@@ -3,6 +3,7 @@ import type {
   CompleteUploadParams,
   FileIdParams,
   GetUploadPresignedUrlBody,
+  ItemQueryParams,
   RenameFileNameBody,
 } from "../schemas/file.schema.js";
 import { requireAuthUser } from "../utils/session.js";
@@ -18,6 +19,7 @@ import {
   restoreFile,
   trashFile,
 } from "../services/file.service.js";
+
 
 const getUploadPresignedUrlHandler = async (
   req: FastifyRequest<{ Body: GetUploadPresignedUrlBody }>,
@@ -96,19 +98,7 @@ const abortFileUploadHandler = async (
   reply.code(204).send();
 };
 
-const trashFileHandler = async (
-  req: FastifyRequest<{ Params: FileIdParams }>,
-  reply: FastifyReply,
-) => {
-  const authUser = requireAuthUser(req);
 
-  await trashFile({
-    userId: authUser.id,
-    fileId: req.params.fileId,
-  });
-
-  reply.code(204).send();
-};
 
 const restoreFileHandler = async (
   req: FastifyRequest<{ Params: FileIdParams }>,
@@ -149,10 +139,7 @@ const getTrashedFilesHandler = async (
   reply.success(200, "Trashed files fetched successfully", { files });
 };
 
-const emptyTrashHandler = async (
-  req: FastifyRequest,
-  reply: FastifyReply,
-) => {
+const emptyTrashHandler = async (req: FastifyRequest, reply: FastifyReply) => {
   const authUser = requireAuthUser(req);
 
   await emptyTrash({ userId: authUser.id });
@@ -167,7 +154,6 @@ export {
   getFileDownloadHandler,
   renameFileHandler,
   abortFileUploadHandler,
-  trashFileHandler,
   restoreFileHandler,
   deleteFilePermanentlyHandler,
   getTrashedFilesHandler,
