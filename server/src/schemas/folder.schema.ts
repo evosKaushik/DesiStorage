@@ -7,7 +7,7 @@ export const objectIdSchema = z.string().refine(Types.ObjectId.isValid, {
 });
 
 export const createFolderSchema = z.object({
-  parentId: objectIdSchema.nullable().optional().default(null),
+  parentId: objectIdSchema,
 
   folderName: z
     .string()
@@ -22,10 +22,24 @@ export const createFolderSchema = z.object({
     .default("New Folder"),
 });
 
-export const FolderIdSchema = z.object({
+export const folderIdSchema = z.object({
   folderId: objectIdSchema,
+});
+
+export const renameFolderNameSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Folder name is required")
+    .max(255, "Folder name cannot exceed 255 characters")
+    .regex(
+      storageNameRegex,
+      'Folder name cannot contain: \\ / : * ? " < > | and cannot end with a space or period.',
+    )
 });
 
 export type CreateFolderBody = z.infer<typeof createFolderSchema>;
 
-export type FolderIdParams = z.infer<typeof FolderIdSchema>;
+export type FolderIdParams = z.infer<typeof folderIdSchema>;
+
+export type RenameFolderNameBody = z.infer<typeof renameFolderNameSchema>;

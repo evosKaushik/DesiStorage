@@ -1,11 +1,39 @@
+import { Types } from "mongoose";
 import File from "../models/file.model.js";
-import Folder from "../models/folder.model.js";
+import Folder, { type IFolder } from "../models/folder.model.js";
 import type { CreateFolderBody } from "../schemas/folder.schema.js";
+import { storageNameRegex } from "../constants/constant.js";
 import { ApiError } from "../utils/ApiError.js";
 
 interface CreateFolderByParentIdParameter extends CreateFolderBody {
   userId: string;
 }
+
+interface RenameFolderParameter {
+  userId: string;
+  folderId: string;
+  name: string;
+}
+
+export interface FolderView {
+  id: string;
+  name: string;
+  size: number;
+  parentFolderId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const toFolderView = (
+  folder: IFolder & { _id: Types.ObjectId },
+): FolderView => ({
+  id: folder._id.toString(),
+  name: folder.name,
+  size: folder.size,
+  parentFolderId: folder.parentFolderId?.toString() ?? null,
+  createdAt: folder.createdAt,
+  updatedAt: folder.updatedAt,
+});
 
 const createFolderByParentId = async ({
   folderName,
@@ -22,12 +50,28 @@ const createFolderByParentId = async ({
       throw new ApiError(404, "Parent Folder Does not exist!");
     }
   }
+  const duplicate = await Folder.exists({
+    userId: userId,
+    parentFolderId: parentId,
+    name: folderName,
+  });
 
-  await Folder.create({
+  if (duplicate) {
+    throw new ApiError(
+      409,
+      "A folder with this name already exists in this folder",
+    );
+  }
+
+  const createdFolder = await Folder.create({
     name: folderName,
     parentFolderId: parentId ?? null,
     userId,
   });
+
+  return {
+    id: createdFolder._id,
+  };
 };
 
 const getFolderById = async ({
@@ -60,9 +104,7 @@ const getFolderById = async ({
       parentFolderId: folderId,
       userId,
     })
-      .select(
-        "_id name extension size parentFolderId createdAt updatedAt",
-      )
+      .select("_id name extension size parentFolderId createdAt updatedAt")
       .lean(),
   ]);
 
@@ -94,4 +136,51 @@ const getFolderById = async ({
   };
 };
 
-export { createFolderByParentId, getFolderById };
+const renameFolder = async ({
+  userId,
+  folderId,
+  name,
+}: RenameFolderParameter) => {
+  if (!Types.ObjectId.isValid(folderId)) {
+    throw new ApiError(400, "Invalid folder ID");
+  }
+
+  const folder = await Folder.findOne({
+    _id: folderId,
+    userId,
+  });
+
+  if (!folder) {
+    throw new ApiError(404, "Folder not found");
+  }
+
+  if (folder.name === name) {
+    return ;
+  }
+
+  const duplicate = await Folder.exists({
+    _id: { $ne: folder._id },
+    userId: folder.userId,
+    parentFolderId: folder.parentFolderId,
+    name,
+  });
+
+  if (duplicate) {
+    throw new ApiError(
+      409,
+      "A folder with this name already exists in this folder",
+    );
+  }
+
+  const updatedFolder = await Folder.findByIdAndUpdate(
+    folder._id,
+    { name },
+    { returnDocument: "after", runValidators: true },
+  );
+
+  if (!updatedFolder) {
+    throw new ApiError(404, "Folder not found");
+  }
+};
+
+export { createFolderByParentId, getFolderById, renameFolder };

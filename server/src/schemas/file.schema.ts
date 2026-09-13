@@ -66,3 +66,4 @@ export type CompleteUploadParams = z.infer<typeof completeUploadParamsSchema>;
 export type FileIdParams = z.infer<typeof fileIdParamsSchema>;
 
 export type RenameFileNameBody = z.infer<typeof renameFileNameSchema>;
+

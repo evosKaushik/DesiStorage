@@ -119,7 +119,7 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
     // User total Storage
     storageLimit: {
       type: Number,
-      default: 15 * 1024 * 1024 * 1024, // 15 GB
+      default: 512 * 1024 * 1024, // 512 MB
       min: [0, "Storage can't be less than 0"],
     },
 

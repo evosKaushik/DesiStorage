@@ -1,7 +1,15 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
-import { createFolderByParentIdHandler, getFolderByIdHandler } from "../../controllers/folder.controller.js";
+import {
+  createFolderByParentIdHandler,
+  getFolderByIdHandler,
+  renameFolderHandler,
+} from "../../controllers/folder.controller.js";
 import { requireVerifiedEmail } from "../../middleware/auth.middleware.js";
-import { createFolderSchema, FolderIdSchema } from "../../schemas/folder.schema.js";
+import {
+  createFolderSchema,
+  folderIdSchema,
+  renameFolderNameSchema,
+} from "../../schemas/folder.schema.js";
 
 const folderRoutes: FastifyPluginAsyncZod = async (app) => {
   // Get Folder
@@ -10,11 +18,12 @@ const folderRoutes: FastifyPluginAsyncZod = async (app) => {
     {
       preHandler: requireVerifiedEmail,
       schema: {
-        params: FolderIdSchema
-      }
+        params: folderIdSchema,
+      },
     },
     getFolderByIdHandler,
   );
+  // Create Folder
   app.post(
     "/",
     {
@@ -25,6 +34,19 @@ const folderRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     createFolderByParentIdHandler,
   );
+  // Rename Folder
+  app.patch(
+    "/:folderId/name",
+    {
+      preHandler: requireVerifiedEmail,
+      schema: {
+        params: folderIdSchema,
+        body: renameFolderNameSchema,
+      },
+    },
+    renameFolderHandler,
+  );
+  // Move Folder To Trash
 };
 
 export default folderRoutes;
