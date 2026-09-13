@@ -1,12 +1,15 @@
 import { FolderPlus } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import DialogWithInput from "@/components/DialogWithInput";
 import type { DashboardTab } from "@/features/dashboard/types/dashboard-tabs";
 import { useShallow } from "zustand/react/shallow";
 import useFileSystemStore, { selectItems } from "@/store/useFileSystemStore";
 import { TabShell } from "./TabShell";
 import { FileSystemSection } from "./FilesSection";
 import { TrashView } from "./TrashView";
+import DriveBreadcrumb from "./DriveBreadcrumb";
 
 const HomeTab = dynamic(() => import("./HomeTab").then((m) => m.HomeTab));
 const RecentTimeline = dynamic(() =>
@@ -36,6 +39,13 @@ const TabView = ({
   openPicker,
 }: TabViewProps) => {
   const items = useFileSystemStore(useShallow(selectItems));
+  const createFolder = useFileSystemStore((state) => state.createFolder);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+
+  const onCreateFolder = async (name: string) => {
+    await createFolder(name);
+    setCreateFolderOpen(false);
+  };
 
   if (tab === "home") return <HomeTab setSelected={setSelected} />;
 
@@ -133,17 +143,31 @@ const TabView = ({
   return (
     <TabShell
       crumbs={["Home", "My Drive"]}
+      breadcrumb={<DriveBreadcrumb />}
       title="My Drive"
       subtitle="All your files, folders and shared workspaces in one place."
       view={view}
       setView={setView}
       openPicker={openPicker}
       actions={
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => setCreateFolderOpen(true)}
+        >
           <FolderPlus className="h-4 w-4" /> New folder
         </Button>
       }
     >
+      <DialogWithInput
+        title="New folder"
+        placeholder="Enter folder name"
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        onSubmit={(name) => void onCreateFolder(name)}
+      />
+
       <section className="mt-10">
         <div className="mb-3 flex items-center justify-between">
           {/* <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

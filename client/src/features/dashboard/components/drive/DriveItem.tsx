@@ -42,6 +42,8 @@ type DriveItemProps = {
   layout?: "grid" | "row";
   active?: boolean;
   onClick?: () => void;
+  /** Fired when a folder is opened (double-click / Enter). */
+  onOpen?: () => void;
   id?: string;
 };
 
@@ -54,6 +56,7 @@ const DriveItem = ({
   layout = "grid",
   active,
   onClick,
+  onOpen,
   id,
 }: DriveItemProps) => {
   const { open } = useFilePreview();
@@ -64,6 +67,14 @@ const DriveItem = ({
     : colorFor(kindLabel);
   const showMediaPreview = item.type === "file" && Boolean(item.url);
 
+  const handleDoubleClick = () => {
+    if (item.type === "file") {
+      open(item);
+    } else {
+      onOpen?.();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
@@ -71,7 +82,7 @@ const DriveItem = ({
     if (item.type === "file") {
       open(item);
     } else {
-      onClick?.();
+      onOpen?.();
     }
   };
 
@@ -79,6 +90,7 @@ const DriveItem = ({
     return (
       <article
         onClick={onClick}
+        onDoubleClick={item.type === "file" ? () => open(item) : onOpen}
         id={id}
         aria-label={item.name}
         className={cn(
@@ -127,6 +139,7 @@ const DriveItem = ({
         <FileItemContextMenu
           selectedItemId={item.id}
           selectedItemName={item.name}
+          selectedItemKind={item.type}
         />
       </article>
     );
@@ -139,7 +152,7 @@ const DriveItem = ({
       aria-label={`${item.name}, ${kindLabel}`}
       aria-pressed={active}
       onClick={onClick}
-      onDoubleClick={item.type === "file" ? () => open(item) : undefined}
+      onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       id={id}
       className={cn(
@@ -158,6 +171,7 @@ const DriveItem = ({
         <FileItemContextMenu
           selectedItemId={item.id}
           selectedItemName={item.name}
+          selectedItemKind={item.type}
         />
       </div>
 

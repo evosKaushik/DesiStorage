@@ -39,13 +39,18 @@ const FileSystemSection = ({
   const folders = useFileSystemStore(useShallow(selectFolders));
   const files = useFileSystemStore(useShallow(selectFiles));
 
-  const renameItemById = useFileSystemStore((state) => state.renameItemById);
-  const removeItem = useFileSystemStore((state) => state.removeItem);
+  const renameItem = useFileSystemStore((state) => state.renameItem);
   const moveToTrash = useTrashStore((state) => state.moveToTrash);
+  const openFolder = useFileSystemStore((state) => state.openFolder);
   const [renameTarget, setRenameTarget] = useState<{
     id: string;
     name: string;
+    type: "file" | "folder";
   } | null>(null);
+
+  const trashItem = (item: FileSystemItem) => {
+    void moveToTrash(item.id, item.type);
+  };
 
   const items = useMemo(
     () => [...folders, ...files] as FileSystemItem[],
@@ -135,11 +140,8 @@ const FileSystemSection = ({
       e.preventDefault();
       const item = items.find((it) => it.id === selected);
 
-      if (item?.type === "file") {
-        void moveToTrash(item.id);
-      } else if (item) {
-        // Folders have no trash support yet — just hide locally.
-        removeItem(selected);
+      if (item) {
+        trashItem(item);
       }
     }
   };
@@ -156,14 +158,19 @@ const FileSystemSection = ({
             onSelect(item.id);
             focusSelected();
           }}
+          onOpen={
+            item.type === "folder"
+              ? () => void openFolder(item.id, item.name)
+              : undefined
+          }
         />
       </ContextMenuTrigger>
       <ContextMenuContent>
         <FileItemContentBody
-          onRename={() => setRenameTarget({ id: item.id, name: item.name })}
-          onTrash={
-            item.type === "file" ? () => void moveToTrash(item.id) : undefined
+          onRename={() =>
+            setRenameTarget({ id: item.id, name: item.name, type: item.type })
           }
+          onTrash={() => trashItem(item)}
         />
       </ContextMenuContent>
     </ContextMenu>
@@ -197,8 +204,7 @@ const FileSystemSection = ({
           }}
           onSubmit={(newName) => {
             if (renameTarget) {
-              renameItemById(renameTarget.id, newName);
-              // Todo: Implement Rename API
+              void renameItem(renameTarget.id, newName, renameTarget.type);
             }
           }}
         />

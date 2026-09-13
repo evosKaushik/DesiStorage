@@ -1,4 +1,4 @@
-import { apiRequest } from "@/utils/api";
+import { apiRequest, apiRequestNoContent } from "@/utils/api";
 
 // ---------------------------------------------------------------------------
 // DTOs returned by GET /folders/:folderId
@@ -39,4 +39,23 @@ export interface GetFolderByIdResponse {
 const getFolderByIdApi = (folderId: string) =>
   apiRequest<GetFolderByIdResponse>("GET", `/folders/${folderId}`);
 
-export { getFolderByIdApi };
+/** Payload for `POST /folders`. `folderName` defaults to "New Folder". */
+export interface CreateFolderPayload {
+  /** Must be a real folder id (use `rootFolderId` for the root). */
+  parentId: string;
+  folderName?: string;
+}
+
+/** The created folder's id (name defaults server-side to "New Folder"). */
+export interface CreatedFolderResponse {
+  id: string;
+}
+
+const createFolderApi = (payload: CreateFolderPayload) =>
+  apiRequest<CreatedFolderResponse>("POST", "/folders", payload);
+
+/** Renames a folder. Replies `204 No Content`. */
+const renameFolderApi = (folderId: string, name: string) =>
+  apiRequestNoContent("PATCH", `/folders/${folderId}/name`, { name });
+
+export { createFolderApi, getFolderByIdApi, renameFolderApi };

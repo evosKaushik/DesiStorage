@@ -160,3 +160,28 @@ export async function apiRequest<T>(
     return { success: false, error: parseApiError(error) };
   }
 }
+
+/**
+ * For endpoints that reply `204 No Content` (no JSON envelope): file/folder
+ * rename, upload complete/abort, and every Trash mutation. Calling
+ * `apiRequest` on them would treat the empty body as a broken envelope, so
+ * these delegate here instead — no bandwidth is spent on a payload the
+ * server deliberately does not send.
+ */
+export async function apiRequestNoContent(
+  method: HttpMethod,
+  url: string,
+  payload?: unknown,
+): Promise<ApiResult<void>> {
+  try {
+    await axiosInstance.request({
+      method,
+      url,
+      ...(payload !== undefined && { data: payload }),
+    });
+
+    return { success: true, data: undefined, message: "" };
+  } catch (error) {
+    return { success: false, error: parseApiError(error) };
+  }
+}

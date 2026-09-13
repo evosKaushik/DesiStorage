@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import useFileSystemStore, { selectItemById } from "@/store/useFileSystemStore";
+import useFileSystemStore from "@/store/useFileSystemStore";
 
 import {
   MoreVertical,
@@ -134,18 +134,24 @@ const FileItemContentBody = ({
 const FileItemContextMenu = ({
   selectedItemId,
   selectedItemName,
+  selectedItemKind = "file",
 }: {
   selectedItemId: string;
   selectedItemName: string;
+  selectedItemKind?: "file" | "folder";
 }) => {
-  const renameItem = useFileSystemStore((state) => state.renameItemById);
+  const renameItem = useFileSystemStore((state) => state.renameItem);
   const moveToTrash = useTrashStore((state) => state.moveToTrash);
 
   const [renameOpen, setRenameOpen] = useState(false);
 
-  const onFileRenameSubmit = (newName: string) => {
-    renameItem(selectedItemId, newName);
-    // Todo: Implement Rename API
+  const onTrash = () => {
+    void moveToTrash(selectedItemId, selectedItemKind);
+  };
+
+  const onFileRenameSubmit = async (newName: string) => {
+    await renameItem(selectedItemId, newName, selectedItemKind);
+    setRenameOpen(false);
   };
 
   return (
@@ -162,7 +168,7 @@ const FileItemContextMenu = ({
         <DropdownMenuContent align="end" className="w-56">
           <FileItemContentBody
             onRename={() => setRenameOpen(true)}
-            onTrash={() => void moveToTrash(selectedItemId)}
+            onTrash={onTrash}
           />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -173,7 +179,7 @@ const FileItemContextMenu = ({
         placeholder="Enter new name"
         open={renameOpen}
         onOpenChange={setRenameOpen}
-        onSubmit={onFileRenameSubmit}
+        onSubmit={(newName) => void onFileRenameSubmit(newName)}
       />
     </>
   );

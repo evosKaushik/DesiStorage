@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 
 type TabShellProps = {
   crumbs: string[];
+  /** Replaces the static `crumbs` trail (e.g. the live My Drive breadcrumb). */
+  breadcrumb?: ReactNode;
   title: string;
   subtitle: string;
   view: "grid" | "list";
@@ -19,6 +21,7 @@ type TabShellProps = {
 
 const TabShell = ({
   crumbs,
+  breadcrumb,
   title,
   subtitle,
   view,
@@ -31,7 +34,8 @@ const TabShell = ({
 }: TabShellProps) => {
   return (
     <>
-      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      {breadcrumb ?? (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Home className="h-3.5 w-3.5" />
         {crumbs.map((c, i) => (
           <span key={c} className="flex items-center gap-1">
@@ -45,7 +49,8 @@ const TabShell = ({
             </span>
           </span>
         ))}
-      </div>
+        </div>
+      )}
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <div>

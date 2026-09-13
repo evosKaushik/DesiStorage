@@ -1,5 +1,5 @@
 import axios from "axios";
-import { apiRequest } from "@/utils/api";
+import { apiRequest, apiRequestNoContent } from "@/utils/api";
 import { axiosInstance } from "@/utils/axiosInstance";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -17,29 +17,28 @@ export interface PresignedUrlPayload {
   parentId: string;
 }
 
-export interface FileView {
-  id: string;
+/** Full display name: `${name}${extension}` (e.g. `photo.png`). */
+export interface RenameFilePayload {
   name: string;
-  extension: string;
-  size: number;
-  mimeType: string;
-  parentFolderId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CompleteUploadResponse {
-  file: FileView;
 }
 
 const getPresignedUrlApi = (payload: PresignedUrlPayload) =>
   apiRequest<PresignedUrlResponse>("POST", "/files/upload", payload);
 
+/**
+ * Registers the uploaded bytes server-side. Replies `204 No Content` (the
+ * file's id is the upload session id already used client-side), so no JSON
+ * payload is fetched.
+ */
 const completeUploadApi = (fileId: string) =>
-  apiRequest<CompleteUploadResponse>(
-    "POST",
-    `/files/upload/${fileId}/complete`,
-  );
+  apiRequestNoContent("POST", `/files/upload/${fileId}/complete`);
+
+/**
+ * Renames a file (server keeps the extension unchanged and validates the
+ * full name). Replies `204 No Content`.
+ */
+const renameFileApi = (fileId: string, name: string) =>
+  apiRequestNoContent("PATCH", `/files/${fileId}/name`, { name } as RenameFilePayload);
 
 /**
  * Cancels an in-flight upload: deletes the partial S3 object + session.
@@ -184,5 +183,6 @@ export {
   getFileDownloadUrl,
   getFileStreamUrl,
   getPresignedUrlApi,
+  renameFileApi,
   uploadFileToStorage,
 };

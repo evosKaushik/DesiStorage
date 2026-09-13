@@ -79,25 +79,27 @@ export default function DashboardPage() {
   }, [selected, storeFiles]);
 
   return (
-    <div className="flex min-h-full">
-      <FilePreviewProvider>
-        <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
-          <VerifyEmailBanner />
-          <TabView
-            tab={tab}
-            query={query}
-            view={view}
-            setView={setView}
-            selected={selected}
-            setSelected={setSelected}
-            openPicker={openPicker}
-          />
-        </div>
-      </FilePreviewProvider>
+    <>
+      <div className="flex min-h-full">
+        <FilePreviewProvider>
+          <div className="min-w-0 flex-1 px-4 py-6 md:px-8">
+            <VerifyEmailBanner />
+            <TabView
+              tab={tab}
+              query={query}
+              view={view}
+              setView={setView}
+              selected={selected}
+              setSelected={setSelected}
+              openPicker={openPicker}
+            />
+          </div>
+        </FilePreviewProvider>
 
-      {selectedFile && (
-        <PreviewPane file={selectedFile} onClose={() => setSelected(null)} />
-      )}
-    </div>
+        {selectedFile && (
+          <PreviewPane file={selectedFile} onClose={() => setSelected(null)} />
+        )}
+      </div>
+    </>
   );
 }

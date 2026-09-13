@@ -283,20 +283,20 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       if (cancelledRef.current.has(id)) return;
 
       if (!complete.success) {
-        patchItem(id, { status: "error", error: complete.error.message });
+        patchItem(id, { status: "error", error: getErrorMessage(complete.error) });
         return;
       }
 
-      const registered = complete.data.file;
-
+      // The endpoint replies 204, so the file is built from what we already
+      // know (the upload session id becomes the file id).
       useFileSystemStore.getState().addItem({
-        id: registered.id,
-        name: `${registered.name}${registered.extension}`,
+        id: uploadId,
+        name: item.name,
         type: "file",
-        size: registered.size,
-        mimeType: registered.mimeType,
-        updatedAt: registered.updatedAt,
-        parentId: registered.parentFolderId,
+        size: item.size,
+        mimeType: file.type || "application/octet-stream",
+        updatedAt: new Date().toISOString(),
+        parentId,
       });
 
       patchItem(id, {
