@@ -117,6 +117,14 @@ fileSchema.statics.findFileByOwner = function (
   return this.findOne({ _id: fileId, userId }).exec();
 };
 
+// A trashed file may share a name with its restored replacement. Active
+// files, however, must remain unique within their parent folder even under
+// concurrent uploads or renames.
+fileSchema.index(
+  { userId: 1, parentFolderId: 1, name: 1, extension: 1 },
+  { unique: true, partialFilterExpression: { deletedAt: null } },
+);
+
 const File = mongoose.model<IFile, FileModel>("File", fileSchema);
 
 export default File;

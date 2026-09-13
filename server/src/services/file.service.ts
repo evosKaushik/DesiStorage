@@ -20,7 +20,6 @@ import Folder from "../models/folder.model.js";
 import User from "../models/user.model.js";
 import File from "../models/file.model.js";
 
-import type { IFile } from "../models/file.model.js";
 import type { PendingUpload } from "../types/file.types.js";
 
 interface GetUploadPresignedUrlParameter extends GetUploadPresignedUrlBody {
@@ -49,25 +48,6 @@ interface AbortFileUploadParameter {
   fileId: string;
 }
 
-interface TrashFileParameter {
-  userId: string;
-  fileId: string;
-}
-
-interface RestoreFileParameter {
-  userId: string;
-  fileId: string;
-}
-
-interface DeleteFilePermanentlyParameter {
-  userId: string;
-  fileId: string;
-}
-
-interface GetTrashedFilesParameter {
-  userId: string;
-}
-
 const getContentDisposition = (
   filename: string,
   type: "inline" | "attachment",
@@ -76,28 +56,6 @@ const getContentDisposition = (
 
   return `${type}; filename="${asciiSafe}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 };
-
-export interface FileView {
-  id: string;
-  name: string;
-  extension: string;
-  size: number;
-  mimeType: string;
-  parentFolderId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const toFileView = (file: IFile & { _id: Types.ObjectId }): FileView => ({
-  id: file._id.toString(),
-  name: file.name,
-  extension: file.extension,
-  size: file.size,
-  mimeType: file.mimeType,
-  parentFolderId: file.parentFolderId.toString(),
-  createdAt: file.createdAt,
-  updatedAt: file.updatedAt,
-});
 
 const getUploadPresignedUrl = async ({
   userId,
@@ -113,6 +71,7 @@ const getUploadPresignedUrl = async ({
   const existingFolder = await Folder.findOne({
     _id: parentId,
     userId,
+    deletedAt: null,
   })
     .select("_id")
     .lean();
@@ -149,7 +108,7 @@ const getUploadPresignedUrl = async ({
 const completeFileUpload = async ({
   userId,
   fileId,
-}: CompleteFileUploadParameter): Promise<FileView> => {
+}: CompleteFileUploadParameter): Promise<void> => {
   if (!Types.ObjectId.isValid(fileId)) {
     throw new ApiError(400, "Invalid file ID");
   }
@@ -171,25 +130,46 @@ const completeFileUpload = async ({
   }
 
   if (claimedData.userId !== userId) {
+    await redisSetJson(redisKey, claimedData, ONE_HOUR);
     throw new ApiError(403, "You can only complete your own uploads");
   }
 
   const existingFolder = await Folder.exists({
     _id: claimedData.parentId,
     userId,
+    deletedAt: null,
   });
 
   if (!existingFolder) {
     throw new ApiError(404, "Parent folder no longer exists");
   }
 
-  const entry = await verifyUpload(
-    fileId,
-    claimedData.expectedSize,
-    claimedData.mimeType,
-  );
+  let entry;
+  try {
+    entry = await verifyUpload(
+      fileId,
+      claimedData.expectedSize,
+      claimedData.mimeType,
+    );
+  } catch (error) {
+    await redisSetJson(redisKey, claimedData, ONE_HOUR);
+    throw error;
+  }
 
-  const file = await File.create({
+  const duplicate = await File.exists({
+    userId,
+    parentFolderId: claimedData.parentId,
+    name: claimedData.name,
+    extension: claimedData.extension,
+    deletedAt: null,
+  });
+
+  if (duplicate) {
+    await deleteFileObject(fileId);
+    throw new ApiError(409, "A file with this name already exists in this folder");
+  }
+
+  await File.create({
     _id: new Types.ObjectId(fileId),
     name: claimedData.name,
     extension: claimedData.extension,
@@ -226,13 +206,12 @@ const completeFileUpload = async ({
     ]);
   } catch (error) {
     await File.deleteOne({
-      _id: file._id,
+      _id: fileId,
     });
 
     throw error;
   }
 
-  return toFileView(file);
 };
 
 const getFilePresignedAccess = async ({
@@ -285,7 +264,7 @@ const renameFile = async ({
   userId,
   fileId,
   name,
-}: RenameFileParameter): Promise<FileView> => {
+}: RenameFileParameter): Promise<void> => {
   if (!Types.ObjectId.isValid(fileId)) {
     throw new ApiError(400, "Invalid file ID");
   }
@@ -344,7 +323,7 @@ const renameFile = async ({
     throw new ApiError(404, "File not found");
   }
 
-  return toFileView(updatedFile);
+  return;
 };
 
 const resolveHandledUpload = async (
@@ -457,133 +436,10 @@ const abortFileUpload = async ({
   }
 };
 
-const trashFile = async ({
-  userId,
-  fileId,
-}: TrashFileParameter): Promise<void> => {
-  if (!Types.ObjectId.isValid(fileId)) {
-    throw new ApiError(400, "Invalid file ID");
-  }
-
-  const folder = await File.findFileByOwner(userId, fileId);
-
-  if (!folder) {
-    throw new ApiError(404, "File not found");
-  }
-
-  if (folder.deletedAt) {
-    throw new ApiError(400, "File is already in Trash");
-  }
-
-  await Folder.updateOne(
-    { _id: folder._id as Types.ObjectId },
-    { deletedAt: new Date() },
-  );
-};
-
-const restoreFile = async ({
-  userId,
-  fileId,
-}: RestoreFileParameter): Promise<void> => {
-  if (!Types.ObjectId.isValid(fileId)) {
-    throw new ApiError(400, "Invalid file ID");
-  }
-
-  const file = await File.findFileByOwner(userId, fileId);
-
-  if (!file) {
-    throw new ApiError(404, "File not found");
-  }
-
-  if (!file.deletedAt) {
-    throw new ApiError(400, "File is not in Trash");
-  }
-
-  const duplicate = await File.exists({
-    _id: { $ne: file._id as Types.ObjectId },
-    userId: file.userId,
-    parentFolderId: file.parentFolderId,
-    name: file.name,
-    extension: file.extension,
-    deletedAt: null,
-  });
-
-  if (duplicate) {
-    throw new ApiError(
-      409,
-      "A file with this name already exists in this folder",
-    );
-  }
-
-  await File.updateOne(
-    { _id: file._id as Types.ObjectId },
-    { deletedAt: null },
-  );
-};
-
-const deleteFilePermanently = async ({
-  userId,
-  fileId,
-}: DeleteFilePermanentlyParameter): Promise<void> => {
-  if (!Types.ObjectId.isValid(fileId)) {
-    throw new ApiError(400, "Invalid file ID");
-  }
-
-  const file = await File.findFileByOwner(userId, fileId);
-
-  if (!file) {
-    throw new ApiError(404, "File not found");
-  }
-
-  if (!file.deletedAt) {
-    throw new ApiError(400, "File must be in Trash before permanent deletion");
-  }
-
-  // Delete the S3 object first so a failure never leaves an orphan object.
-  // A DB failure afterwards leaves the soft-deleted record, which is safe
-  // to retry (deleting a missing object is idempotent).
-  await deleteFileObject(fileId);
-
-  await File.deleteOne({ _id: file._id as Types.ObjectId });
-};
-
-const getTrashedFiles = async ({
-  userId,
-}: GetTrashedFilesParameter): Promise<FileView[]> => {
-  const trashedFiles = await File.findTrashedFiles(userId);
-
-  return trashedFiles.map((file) =>
-    toFileView(file as IFile & { _id: Types.ObjectId }),
-  );
-};
-
-const emptyTrash = async ({
-  userId,
-}: GetTrashedFilesParameter): Promise<void> => {
-  const trashedFiles = await File.findTrashedFiles(userId);
-
-  // Delete objects first so a mid-way failure never leaves orphan objects.
-  // Remaining DB records stay soft-deleted and a retry converges.
-  for (const file of trashedFiles) {
-    const fileId = file._id?.toString();
-
-    if (fileId) {
-      await deleteFileObject(fileId);
-    }
-  }
-
-  await File.deleteMany({ userId, deletedAt: { $ne: null } });
-};
-
 export {
   getUploadPresignedUrl,
   completeFileUpload,
   getFilePresignedAccess,
   renameFile,
   abortFileUpload,
-  trashFile,
-  restoreFile,
-  deleteFilePermanently,
-  getTrashedFiles,
-  emptyTrash,
 };

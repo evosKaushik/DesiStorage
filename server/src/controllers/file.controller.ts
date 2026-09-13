@@ -3,21 +3,15 @@ import type {
   CompleteUploadParams,
   FileIdParams,
   GetUploadPresignedUrlBody,
-  ItemQueryParams,
   RenameFileNameBody,
 } from "../schemas/file.schema.js";
 import { requireAuthUser } from "../utils/session.js";
 import {
   abortFileUpload,
   completeFileUpload,
-  deleteFilePermanently,
-  emptyTrash,
   getFilePresignedAccess,
-  getTrashedFiles,
   getUploadPresignedUrl,
   renameFile,
-  restoreFile,
-  trashFile,
 } from "../services/file.service.js";
 
 
@@ -41,12 +35,12 @@ const completeFileUploadHandler = async (
 ) => {
   const authUser = requireAuthUser(req);
 
-  const file = await completeFileUpload({
+  await completeFileUpload({
     userId: authUser.id,
     fileId: req.params.fileId,
   });
 
-  reply.success(201, "File registered successfully", { file });
+  return reply.code(204).send();
 };
 
 const getFileAccessHandler =
@@ -75,13 +69,13 @@ const renameFileHandler = async (
 ) => {
   const authUser = requireAuthUser(req);
 
-  const file = await renameFile({
+  await renameFile({
     userId: authUser.id,
     fileId: req.params.fileId,
     name: req.body.name,
   });
 
-  reply.success(200, "File renamed successfully", { file });
+  return reply.code(204).send();
 };
 
 const abortFileUploadHandler = async (
@@ -99,54 +93,6 @@ const abortFileUploadHandler = async (
 };
 
 
-
-const restoreFileHandler = async (
-  req: FastifyRequest<{ Params: FileIdParams }>,
-  reply: FastifyReply,
-) => {
-  const authUser = requireAuthUser(req);
-
-  await restoreFile({
-    userId: authUser.id,
-    fileId: req.params.fileId,
-  });
-
-  reply.code(204).send();
-};
-
-const deleteFilePermanentlyHandler = async (
-  req: FastifyRequest<{ Params: FileIdParams }>,
-  reply: FastifyReply,
-) => {
-  const authUser = requireAuthUser(req);
-
-  await deleteFilePermanently({
-    userId: authUser.id,
-    fileId: req.params.fileId,
-  });
-
-  reply.code(204).send();
-};
-
-const getTrashedFilesHandler = async (
-  req: FastifyRequest,
-  reply: FastifyReply,
-) => {
-  const authUser = requireAuthUser(req);
-
-  const files = await getTrashedFiles({ userId: authUser.id });
-
-  reply.success(200, "Trashed files fetched successfully", { files });
-};
-
-const emptyTrashHandler = async (req: FastifyRequest, reply: FastifyReply) => {
-  const authUser = requireAuthUser(req);
-
-  await emptyTrash({ userId: authUser.id });
-
-  reply.code(204).send();
-};
-
 export {
   getUploadPresignedUrlHandler,
   completeFileUploadHandler,
@@ -154,8 +100,4 @@ export {
   getFileDownloadHandler,
   renameFileHandler,
   abortFileUploadHandler,
-  restoreFileHandler,
-  deleteFilePermanentlyHandler,
-  getTrashedFilesHandler,
-  emptyTrashHandler,
 };

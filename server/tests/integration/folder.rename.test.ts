@@ -125,15 +125,8 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
       "holiday",
     );
 
-    assert.equal(res.statusCode, 200);
-
-    const body = res.json();
-
-    assert.equal(body.success, true);
-    assert.equal(body.message, "Folder renamed successfully");
-    assert.equal(body.data.name, "holiday");
-    assert.ok(body.data.id);
-    assert.ok(body.data.parentFolderId === null || body.data.parentFolderId);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
 
     const persisted = await Folder.findById(folder._id).lean();
 
@@ -150,11 +143,11 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
       "my-holiday-pics",
     );
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.name, "my-holiday-pics");
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
   });
 
-  it("returns 200 unchanged when the name does not change", async () => {
+  it("returns 204 unchanged when the name does not change", async () => {
     const user = await createVerifiedUser();
     const folder = await createFolder(user.id);
 
@@ -164,8 +157,8 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
       "projects",
     );
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.name, "projects");
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
   });
 
   it("returns 400 for an invalid folderId", async () => {
@@ -258,7 +251,7 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
 
     const res = await renameRequest(user.cookies, folder._id.toString(), "holiday");
 
-    assert.equal(res.statusCode, 200);
+    assert.equal(res.statusCode, 204);
   });
 
   it("allows renaming a folder while keeping its children intact", async () => {
@@ -274,8 +267,8 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
 
     const res = await renameRequest(user.cookies, folder._id.toString(), "renamed");
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.name, "renamed");
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
 
     const persistedChild = await Folder.findById(child._id).lean();
 
@@ -286,7 +279,7 @@ describe("PATCH /api/v1/folders/:folderId/name", () => {
     const user = await createVerifiedUser();
     const folder = await createFolder(user.id);
 
-    t.mock.method(Folder, "findByIdAndUpdate", async () => {
+    t.mock.method(Folder, "findOneAndUpdate", async () => {
       throw new Error("mongodb exploded");
     });
 

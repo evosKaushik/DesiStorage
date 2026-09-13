@@ -57,7 +57,7 @@ export const authedInject = async (
   app: FastifyInstance,
   cookies: TestCookie[],
   opts: {
-    method: "GET" | "POST" | "PATCH";
+    method: "GET" | "POST" | "PATCH" | "DELETE";
     url: string;
     payload?: unknown;
   },

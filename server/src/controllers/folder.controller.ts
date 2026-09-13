@@ -45,13 +45,13 @@ const renameFolderHandler = async (
   const { folderId } = req.params;
   const authUser = requireAuthUser(req);
 
-   await renameFolder({
+  await renameFolder({
     userId: authUser.id,
     folderId,
     name: req.body.name,
   });
 
-  return reply.success(200, "Folder renamed successfully", null);
+  return reply.code(204).send();
 };
 
 export {

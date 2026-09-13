@@ -11,14 +11,10 @@ import {
 import {
   abortFileUploadHandler,
   completeFileUploadHandler,
-  deleteFilePermanentlyHandler,
-  emptyTrashHandler,
   getFileDownloadHandler,
   getFilePreviewHandler,
-  getTrashedFilesHandler,
   getUploadPresignedUrlHandler,
   renameFileHandler,
-  restoreFileHandler,
 } from "../../controllers/file.controller.js";
 
 const fileRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -53,17 +49,6 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     abortFileUploadHandler,
-  );
-  // Permanently delete a File (only allowed from Trash)
-  app.delete(
-    "/:fileId/permanent",
-    {
-      preHandler: requireVerifiedEmail,
-      schema: {
-        params: fileIdParamsSchema,
-      },
-    },
-    deleteFilePermanentlyHandler,
   );
   // Preview File Content (inline presigned link)
   app.get(

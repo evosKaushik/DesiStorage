@@ -90,6 +90,14 @@ folderSchema.statics.findFolderByOwner = function (
   return this.findOne({ _id: fileId, userId }).exec();
 };
 
+// A trashed folder may share a name with a new folder, but live siblings
+// cannot. The partial index closes the race between duplicate checks and
+// writes.
+folderSchema.index(
+  { userId: 1, parentFolderId: 1, name: 1 },
+  { unique: true, partialFilterExpression: { deletedAt: null } },
+);
+
 const Folder = mongoose.model<IFolder, FolderModel>("Folder", folderSchema);
 
 export default Folder;

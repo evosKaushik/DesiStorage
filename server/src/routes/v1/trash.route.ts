@@ -1,15 +1,18 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { requireVerifiedEmail } from "../../middleware/auth.middleware.js";
-import { itemQuerySchema } from "../../schemas/file.schema.js";
 import {
-  emptyTrashHandler,
-  getTrashedFilesHandler,
-  restoreFileHandler,
-} from "../../controllers/file.controller.js";
+  itemQuerySchema,
+  permanentDeleteBodySchema,
+  permanentDeleteQuerySchema,
+  trashBulkSchema,
+} from "../../schemas/trash.schema.js";
 import {
   getTrashedItemsHandler,
+  permanentDeleteHandler,
   restoreItemHandler,
+  restoreItemsHandler,
   trashItemHandler,
+  trashItemsHandler,
 } from "../../controllers/trash.controller.js";
 
 const trashRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -22,14 +25,7 @@ const trashRoutes: FastifyPluginAsyncZod = async (app) => {
     getTrashedItemsHandler,
   );
 
-  app.delete(
-    "/",
-    {
-      preHandler: requireVerifiedEmail,
-    },
-    emptyTrashHandler,
-  );
-  // Move a Items to Trash (soft delete)
+  // Move a Item to Trash (soft delete)
   app.post(
     "/",
     {
@@ -40,7 +36,18 @@ const trashRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     trashItemHandler,
   );
-  // Restore a File from Trash
+  // Move multiple files and folders to Trash (soft delete)
+  app.post(
+    "/bulk",
+    {
+      preHandler: requireVerifiedEmail,
+      schema: {
+        body: trashBulkSchema,
+      },
+    },
+    trashItemsHandler,
+  );
+  // Restore a Item from Trash
   app.post(
     "/restore",
     {
@@ -50,6 +57,30 @@ const trashRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     restoreItemHandler,
+  );
+  // Restore multiple files and folders from Trash
+  app.post(
+    "/restore/bulk",
+    {
+      preHandler: requireVerifiedEmail,
+      schema: {
+        body: trashBulkSchema,
+      },
+    },
+    restoreItemsHandler,
+  );
+  // Permanently delete: action=file (single) / action=multiple (ids in body)
+  // / action=empty (no body, wipes the whole Trash)
+  app.delete(
+    "/permanent",
+    {
+      preHandler: requireVerifiedEmail,
+      schema: {
+        querystring: permanentDeleteQuerySchema,
+        body: permanentDeleteBodySchema,
+      },
+    },
+    permanentDeleteHandler,
   );
 };
 

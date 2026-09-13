@@ -1,8 +1,7 @@
 import { Types } from "mongoose";
 import File from "../models/file.model.js";
-import Folder, { type IFolder } from "../models/folder.model.js";
+import Folder from "../models/folder.model.js";
 import type { CreateFolderBody } from "../schemas/folder.schema.js";
-import { storageNameRegex } from "../constants/constant.js";
 import { ApiError } from "../utils/ApiError.js";
 
 interface CreateFolderByParentIdParameter extends CreateFolderBody {
@@ -15,26 +14,6 @@ interface RenameFolderParameter {
   name: string;
 }
 
-export interface FolderView {
-  id: string;
-  name: string;
-  size: number;
-  parentFolderId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const toFolderView = (
-  folder: IFolder & { _id: Types.ObjectId },
-): FolderView => ({
-  id: folder._id.toString(),
-  name: folder.name,
-  size: folder.size,
-  parentFolderId: folder.parentFolderId?.toString() ?? null,
-  createdAt: folder.createdAt,
-  updatedAt: folder.updatedAt,
-});
-
 const createFolderByParentId = async ({
   folderName,
   parentId,
@@ -44,6 +23,7 @@ const createFolderByParentId = async ({
     const existingParentFolder = await Folder.exists({
       _id: parentId,
       userId,
+      deletedAt: null,
     });
 
     if (!existingParentFolder) {
@@ -54,6 +34,7 @@ const createFolderByParentId = async ({
     userId: userId,
     parentFolderId: parentId,
     name: folderName,
+    deletedAt: null,
   });
 
   if (duplicate) {
@@ -84,6 +65,7 @@ const getFolderById = async ({
   const folder = await Folder.findOne({
     _id: folderId,
     userId,
+    deletedAt: null,
   })
     .select("_id name parentFolderId")
     .lean();
@@ -96,15 +78,17 @@ const getFolderById = async ({
     Folder.find({
       parentFolderId: folderId,
       userId,
+      deletedAt: null,
     })
-      .select("_id name parentFolderId createdAt updatedAt")
+      .select("_id name parentFolderId")
       .lean(),
 
     File.find({
       parentFolderId: folderId,
       userId,
+      deletedAt: null,
     })
-      .select("_id name extension size parentFolderId createdAt updatedAt")
+      .select("_id name extension size mimeType parentFolderId")
       .lean(),
   ]);
 
@@ -119,8 +103,6 @@ const getFolderById = async ({
       id: folder._id.toString(),
       name: folder.name,
       parentFolderId: folder.parentFolderId?.toString() ?? null,
-      createdAt: folder.createdAt,
-      updatedAt: folder.updatedAt,
     })),
 
     files: files.map((file) => ({
@@ -130,8 +112,6 @@ const getFolderById = async ({
       size: file.size,
       mimeType: file.mimeType,
       parentFolderId: file.parentFolderId.toString(),
-      createdAt: file.createdAt,
-      updatedAt: file.updatedAt,
     })),
   };
 };
@@ -148,6 +128,7 @@ const renameFolder = async ({
   const folder = await Folder.findOne({
     _id: folderId,
     userId,
+    deletedAt: null,
   });
 
   if (!folder) {
@@ -155,7 +136,7 @@ const renameFolder = async ({
   }
 
   if (folder.name === name) {
-    return ;
+    return;
   }
 
   const duplicate = await Folder.exists({
@@ -163,6 +144,7 @@ const renameFolder = async ({
     userId: folder.userId,
     parentFolderId: folder.parentFolderId,
     name,
+    deletedAt: null,
   });
 
   if (duplicate) {
@@ -172,8 +154,8 @@ const renameFolder = async ({
     );
   }
 
-  const updatedFolder = await Folder.findByIdAndUpdate(
-    folder._id,
+  const updatedFolder = await Folder.findOneAndUpdate(
+    { _id: folder._id, userId, deletedAt: null },
     { name },
     { returnDocument: "after", runValidators: true },
   );
@@ -181,6 +163,8 @@ const renameFolder = async ({
   if (!updatedFolder) {
     throw new ApiError(404, "Folder not found");
   }
+
+  return;
 };
 
 export { createFolderByParentId, getFolderById, renameFolder };

@@ -129,14 +129,8 @@ describe("PATCH /api/v1/files/:fileId/name", () => {
 
     const res = await renameRequest(user.cookies, file._id.toString(), "holiday.png");
 
-    assert.equal(res.statusCode, 200);
-
-    const body = res.json();
-
-    assert.equal(body.success, true);
-    assert.equal(body.message, "File renamed successfully");
-    assert.equal(body.data.file.name, "holiday");
-    assert.equal(body.data.file.extension, ".png");
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
 
     const persisted = await File.findById(file._id).lean();
 
@@ -150,9 +144,8 @@ describe("PATCH /api/v1/files/:fileId/name", () => {
 
     const res = await renameRequest(user.cookies, file._id.toString(), "my-photo.png");
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.file.name, "my-photo");
-    assert.equal(res.json().data.file.extension, ".png");
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
   });
 
   it("returns 400 for an invalid fileId", async () => {
@@ -276,8 +269,7 @@ describe("PATCH /api/v1/files/:fileId/name", () => {
 
     const res = await renameRequest(user.cookies, file._id.toString(), "holiday.png");
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.file.name, "holiday");
+    assert.equal(res.statusCode, 204);
   });
 
   it("does not invoke the storage provider", async (t) => {
@@ -290,9 +282,8 @@ describe("PATCH /api/v1/files/:fileId/name", () => {
 
     const res = await renameRequest(user.cookies, file._id.toString(), "holiday.png");
 
-    assert.equal(res.statusCode, 200);
+    assert.equal(res.statusCode, 204);
     assert.equal(sendSpy.mock.callCount(), 0);
-    assert.equal(res.json().data.file.name, "holiday");
   });
 
   it("handles DB failures through the global error mechanism", async (t) => {
