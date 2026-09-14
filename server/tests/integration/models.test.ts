@@ -46,7 +46,7 @@ describe("User model", () => {
     const user = await User.create(validLocal);
 
     assert.equal(user.avatar, "https://res.cloudinary.com/dvhqwwpdl/image/upload/v1777532041/default-avatar_frnvfo.jpg");
-    assert.equal(user.storageLimit, 15 * 1024 * 1024 * 1024);
+    assert.equal(user.storageLimit, 512 * 1024 * 1024);
     assert.equal(user.storageUsed, 0);
     assert.equal(user.isEmailVerified, false);
     assert.equal(user.authProviders[0], "local");

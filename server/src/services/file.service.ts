@@ -1,9 +1,11 @@
 import { Types } from "mongoose";
 
-import type { GetUploadPresignedUrlBody } from "../schemas/file.schema.js";
+import type { UploadRequestBody } from "../schemas/file.schema.js";
 
 import {
+  createMultipartUpload,
   deleteFileObject,
+  generatePresignedPartUploadUrl,
   generatePresignedReadUrl,
   generatePresignedUploadUrl,
   getFileStorageKey,
@@ -16,19 +18,31 @@ import { uploadAbortedKey, uploadIdKey } from "../utils/cacheKeys.js";
 import { ONE_HOUR, fileBaseNameRegex } from "../constants/constant.js";
 import { ApiError } from "../utils/ApiError.js";
 
-import Folder from "../models/folder.model.js";
-import User from "../models/user.model.js";
-import File from "../models/file.model.js";
+import FolderModel from "../models/folder.model.js";
+import UserModel from "../models/user.model.js";
+import FileModel from "../models/file.model.js";
 
 import type { PendingUpload } from "../types/file.types.js";
+import { getUploadStrategy } from "../utils/uploads.js";
+import UploadSessionModel from "../models/uploadSession.model.js";
+import mongoose from "mongoose";
 
-interface GetUploadPresignedUrlParameter extends GetUploadPresignedUrlBody {
-  userId: string;
+interface UploadFilesArguments extends UploadRequestBody {
+  user: {
+    id: string;
+    storageLimit: number;
+    storageUsed: number;
+  };
 }
 
 interface CompleteFileUploadParameter {
   userId: string;
   fileId: string;
+}
+
+interface GetPartUploadUrlsArguments {
+  userId: string;
+  uploadId: string;
 }
 
 interface GetFilePresignedAccessParameter {
@@ -57,52 +71,141 @@ const getContentDisposition = (
   return `${type}; filename="${asciiSafe}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 };
 
-const getUploadPresignedUrl = async ({
-  userId,
-  name,
+const uploadFiles = async ({
+  user,
   size,
-  extension,
   mimeType,
-  parentId,
-}: GetUploadPresignedUrlParameter): Promise<{
-  fileId: string;
-  url: string;
-}> => {
-  const existingFolder = await Folder.findOne({
-    _id: parentId,
-    userId,
-    deletedAt: null,
-  })
-    .select("_id")
-    .lean();
-
-  if (!existingFolder) {
-    throw new ApiError(404, "Parent folder does not exist");
+  folderId,
+}: UploadFilesArguments) => {
+  // 1. Check quota
+  if (user.storageUsed + size > user.storageLimit) {
+    throw new ApiError(400, "Storage limit exceeded");
   }
 
-  const fileId = new Types.ObjectId().toString();
+  // 2. Check folder ownership
+  const folder = folderId
+    ? await FolderModel.findOne({
+        _id: folderId,
+        userId: user.id,
+      })
+        .select("_id")
+        .lean()
+    : null;
 
-  const url = await generatePresignedUploadUrl(fileId, mimeType);
-
-  const cachedData: PendingUpload = {
-    userId,
-    parentId,
-    name,
-    extension,
-    mimeType,
-    expectedSize: size,
-  };
-
-  try {
-    await redisSetJson(uploadIdKey(fileId), cachedData, ONE_HOUR);
-  } catch {
-    throw new ApiError(503, "Upload session store is unavailable");
+  if (folderId && !folder) {
+    throw new ApiError(404, "Folder not found");
   }
+
+  // 3. Decide strategy
+  const uploadConfig = getUploadStrategy(size);
+
+  // 4. Generate file ID
+  const fileId = new mongoose.Types.ObjectId();
+
+  // 6. Simple upload
+  if (uploadConfig.strategy === "simple") {
+    const url = await generatePresignedUploadUrl(fileId.toString(), mimeType);
+
+    await UploadSessionModel.create({
+      fileId,
+      userId: user.id,
+      folderId: folderId ?? null,
+
+      strategy: "simple",
+
+      storageUploadId: null,
+
+      fileSize: size,
+      partSize: null,
+      totalParts: null,
+
+      status: "uploading",
+
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    return {
+      fileId,
+
+      strategy: "simple",
+
+      url,
+    };
+  }
+
+  // 7. Multipart
+
+  const multipart = await createMultipartUpload(fileId.toString(), mimeType);
+  await UploadSessionModel.create({
+    fileId,
+    userId: user.id,
+    folderId: folderId ?? null,
+
+    strategy: "multipart",
+
+    storageUploadId: multipart.UploadId ?? null,
+
+    fileSize: size,
+    partSize: uploadConfig.partSize,
+    totalParts: uploadConfig.totalParts,
+
+    status: "uploading",
+
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
 
   return {
     fileId,
-    url,
+
+    strategy: "multipart",
+
+    uploadId: multipart.UploadId,
+    partSize: uploadConfig.partSize,
+    totalParts: uploadConfig.totalParts,
   };
+};
+const getPartUploadUrls = async ({
+  userId,
+  uploadId,
+}: GetPartUploadUrlsArguments) => {
+  // 1. Find the upload session by the S3 UploadId
+  const session = await UploadSessionModel.findOne({
+    storageUploadId: uploadId,
+    userId,
+  }).lean();
+
+  if (!session) {
+    throw new ApiError(404, "Upload session not found");
+  }
+
+  // 2. Make sure it is a multipart upload with complete metadata
+  if (session.strategy !== "multipart") {
+    throw new ApiError(400, "This upload is not a multipart upload");
+  }
+
+  if (!session.fileId || !session.storageUploadId || !session.totalParts) {
+    throw new ApiError(400, "Upload session is missing multipart metadata");
+  }
+
+  const fileId = session.fileId.toString();
+
+  // 3. Generate a presigned URL for every part
+  const parts: Array<{ partNumber: number; url: string }> = [];
+
+  for (let partNumber = 1; partNumber <= session.totalParts; partNumber++) {
+    const url = await generatePresignedPartUploadUrl(
+      fileId,
+      session.storageUploadId,
+      partNumber,
+    );
+
+    parts.push({
+      partNumber,
+      url,
+    });
+  }
+
+  return { parts };
 };
 
 const completeFileUpload = async ({
@@ -134,7 +237,7 @@ const completeFileUpload = async ({
     throw new ApiError(403, "You can only complete your own uploads");
   }
 
-  const existingFolder = await Folder.exists({
+  const existingFolder = await FolderModel.exists({
     _id: claimedData.parentId,
     userId,
     deletedAt: null,
@@ -156,7 +259,7 @@ const completeFileUpload = async ({
     throw error;
   }
 
-  const duplicate = await File.exists({
+  const duplicate = await FileModel.exists({
     userId,
     parentFolderId: claimedData.parentId,
     name: claimedData.name,
@@ -166,10 +269,13 @@ const completeFileUpload = async ({
 
   if (duplicate) {
     await deleteFileObject(fileId);
-    throw new ApiError(409, "A file with this name already exists in this folder");
+    throw new ApiError(
+      409,
+      "A file with this name already exists in this folder",
+    );
   }
 
-  await File.create({
+  await FileModel.create({
     _id: new Types.ObjectId(fileId),
     name: claimedData.name,
     extension: claimedData.extension,
@@ -181,7 +287,7 @@ const completeFileUpload = async ({
 
   try {
     await Promise.all([
-      Folder.updateOne(
+      FolderModel.updateOne(
         {
           _id: claimedData.parentId,
           userId,
@@ -193,7 +299,7 @@ const completeFileUpload = async ({
         },
       ),
 
-      User.updateOne(
+      UserModel.updateOne(
         {
           _id: userId,
         },
@@ -205,13 +311,12 @@ const completeFileUpload = async ({
       ),
     ]);
   } catch (error) {
-    await File.deleteOne({
+    await FileModel.deleteOne({
       _id: fileId,
     });
 
     throw error;
   }
-
 };
 
 const getFilePresignedAccess = async ({
@@ -229,7 +334,7 @@ const getFilePresignedAccess = async ({
     throw new ApiError(400, "Invalid file ID");
   }
 
-  const file = await File.findById(fileId)
+  const file = await FileModel.findById(fileId)
     .select("name extension mimeType size userId")
     .lean();
 
@@ -281,7 +386,7 @@ const renameFile = async ({
     throw new ApiError(400, "File name contains invalid characters");
   }
 
-  const file = await File.findFileByOwner(
+  const file = await FileModel.findFileByOwner(
     new Types.ObjectId(userId),
     new Types.ObjectId(fileId),
   );
@@ -300,7 +405,7 @@ const renameFile = async ({
 
   const duplicateId = file._id as Types.ObjectId;
 
-  const duplicate = await File.exists({
+  const duplicate = await FileModel.exists({
     _id: { $ne: duplicateId },
     userId: file.userId,
     parentFolderId: file.parentFolderId,
@@ -313,7 +418,7 @@ const renameFile = async ({
     throw new ApiError(409, "A file with this name already exists");
   }
 
-  const updatedFile = await File.findByIdAndUpdate(
+  const updatedFile = await FileModel.findByIdAndUpdate(
     file._id,
     { name: baseName },
     { returnDocument: "after", runValidators: true },
@@ -344,7 +449,7 @@ const resolveHandledUpload = async (
     return "aborted";
   }
 
-  const completed = await File.exists({
+  const completed = await FileModel.exists({
     _id: new Types.ObjectId(fileId),
     userId,
   });
@@ -437,9 +542,10 @@ const abortFileUpload = async ({
 };
 
 export {
-  getUploadPresignedUrl,
+  uploadFiles,
   completeFileUpload,
   getFilePresignedAccess,
+  getPartUploadUrls,
   renameFile,
   abortFileUpload,
 };

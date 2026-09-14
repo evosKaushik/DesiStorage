@@ -1,9 +1,3 @@
-//   "name": "video",
-//   "extension": ".mp4",
-//   "size": 104857600,
-//   "contentType": "video/mp4",
-//   "parentId": null
-
 import z from "zod";
 import { objectIdSchema } from "./folder.schema.js";
 import {
@@ -13,7 +7,7 @@ import {
   storageNameRegex,
 } from "../constants/constant.js";
 
-export const getUploadPresignedUrlSchema = z.object({
+export const uploadRequestSchema = z.object({
   name: z
     .string()
     .trim()
@@ -34,7 +28,7 @@ export const getUploadPresignedUrlSchema = z.object({
     .regex(fileExtensionRegex, "Extension must be like .png or .zip"),
   size: z.number().nonnegative("File size cannot be negative"),
   mimeType: z.string().trim().regex(mimeTypeRegex, "Invalid content type"),
-  parentId: objectIdSchema,
+  folderId: objectIdSchema.nullable(),
 });
 
 export const completeUploadParamsSchema = z.object({
@@ -57,12 +51,16 @@ export const renameFileNameSchema = z.object({
     ),
 });
 
-export type GetUploadPresignedUrlBody = z.infer<
-  typeof getUploadPresignedUrlSchema
->;
+export const uploadFilePartsSchema = z.object({
+  uploadId: z.string().min(1, "Upload ID is required"),
+});
+
+export type UploadRequestBody = z.infer<typeof uploadRequestSchema>;
 
 export type CompleteUploadParams = z.infer<typeof completeUploadParamsSchema>;
 
 export type FileIdParams = z.infer<typeof fileIdParamsSchema>;
 
 export type RenameFileNameBody = z.infer<typeof renameFileNameSchema>;
+
+export type UploadFilePartsParams = z.infer<typeof uploadFilePartsSchema>;

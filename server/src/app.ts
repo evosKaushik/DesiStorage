@@ -29,7 +29,12 @@ export async function buildApp({
   logger = loggerConfig,
   database = true,
 }: BuildAppOptions = {}): Promise<FastifyInstance> {
-  const app = Fastify({ logger });
+  const app = Fastify({
+    logger,
+    // S3 multipart UploadIds can comfortably exceed Fastify's default
+    // maxParamLength of 100, so `/upload/:uploadId/parts` needs headroom.
+    maxParamLength: 2048,
+  });
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);

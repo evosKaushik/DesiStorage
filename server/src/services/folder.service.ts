@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import File from "../models/file.model.js";
-import Folder from "../models/folder.model.js";
+import FileModel from "../models/file.model.js";
+import FolderModel, { type IFolder } from "../models/folder.model.js";
 import type { CreateFolderBody } from "../schemas/folder.schema.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -20,7 +20,7 @@ const createFolderByParentId = async ({
   userId,
 }: CreateFolderByParentIdParameter) => {
   if (parentId) {
-    const existingParentFolder = await Folder.exists({
+    const existingParentFolder = await FolderModel.exists({
       _id: parentId,
       userId,
       deletedAt: null,
@@ -30,7 +30,7 @@ const createFolderByParentId = async ({
       throw new ApiError(404, "Parent Folder Does not exist!");
     }
   }
-  const duplicate = await Folder.exists({
+  const duplicate = await FolderModel.exists({
     userId: userId,
     parentFolderId: parentId,
     name: folderName,
@@ -44,7 +44,7 @@ const createFolderByParentId = async ({
     );
   }
 
-  const createdFolder = await Folder.create({
+  const createdFolder = await FolderModel.create({
     name: folderName,
     parentFolderId: parentId ?? null,
     userId,
@@ -62,7 +62,7 @@ const getFolderById = async ({
   userId: string;
   folderId: string;
 }) => {
-  const folder = await Folder.findOne({
+  const folder = await FolderModel.findOne({
     _id: folderId,
     userId,
     deletedAt: null,
@@ -75,7 +75,7 @@ const getFolderById = async ({
   }
 
   const [folders, files] = await Promise.all([
-    Folder.find({
+    FolderModel.find({
       parentFolderId: folderId,
       userId,
       deletedAt: null,
@@ -83,7 +83,7 @@ const getFolderById = async ({
       .select("_id name parentFolderId")
       .lean(),
 
-    File.find({
+    FileModel.find({
       parentFolderId: folderId,
       userId,
       deletedAt: null,
@@ -125,7 +125,7 @@ const renameFolder = async ({
     throw new ApiError(400, "Invalid folder ID");
   }
 
-  const folder = await Folder.findOne({
+  const folder = await FolderModel.findOne({
     _id: folderId,
     userId,
     deletedAt: null,
@@ -139,7 +139,7 @@ const renameFolder = async ({
     return;
   }
 
-  const duplicate = await Folder.exists({
+  const duplicate = await FolderModel.exists({
     _id: { $ne: folder._id },
     userId: folder.userId,
     parentFolderId: folder.parentFolderId,
@@ -154,7 +154,7 @@ const renameFolder = async ({
     );
   }
 
-  const updatedFolder = await Folder.findOneAndUpdate(
+  const updatedFolder = await FolderModel.findOneAndUpdate(
     { _id: folder._id, userId, deletedAt: null },
     { name },
     { returnDocument: "after", runValidators: true },

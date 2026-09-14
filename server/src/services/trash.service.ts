@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
-import Folder, { type IFolder } from "../models/folder.model.js";
+import FolderModel, { type IFolder } from "../models/folder.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import File, { type IFile } from "../models/file.model.js";
-import User from "../models/user.model.js";
+import FileModel, { type IFile } from "../models/file.model.js";
+import UserModel from "../models/user.model.js";
 import { redisClient } from "../config/redis.js";
 import { getUserProfileCacheKey } from "../utils/cacheKeys.js";
 import { deleteFileObject } from "../utils/awsS3.js";
@@ -73,7 +73,7 @@ const collectFolderSubtree = async (
     const batch = frontier;
     frontier = [];
 
-    const children = await Folder.find({
+    const children = await FolderModel.find({
       parentFolderId: { $in: batch },
       userId,
       ...stateFilter,
@@ -100,7 +100,7 @@ const trashItem = async ({ userId, fileId, folderId }: trashItemArgument) => {
     throw new ApiError(400, "FolderId aur FileId is required");
 
   if (fileId) {
-    const file = await File.findFileByOwner(userId, fileId);
+    const file = await FileModel.findFileByOwner(userId, fileId);
 
     if (!file) {
       throw new ApiError(404, "File not found");
@@ -110,7 +110,7 @@ const trashItem = async ({ userId, fileId, folderId }: trashItemArgument) => {
       throw new ApiError(400, "File is already in Trash");
     }
 
-    await File.updateOne(
+    await FileModel.updateOne(
       { _id: file._id as Types.ObjectId },
       { deletedAt: new Date() },
     );
@@ -118,7 +118,7 @@ const trashItem = async ({ userId, fileId, folderId }: trashItemArgument) => {
   }
 
   if (folderId) {
-    const folder = await Folder.findFolderByOwner(userId, folderId);
+    const folder = await FolderModel.findFolderByOwner(userId, folderId);
 
     if (!folder) {
       throw new ApiError(404, "Folder not found");
@@ -137,11 +137,11 @@ const trashItem = async ({ userId, fileId, folderId }: trashItemArgument) => {
     );
 
     await Promise.all([
-      Folder.updateMany(
+      FolderModel.updateMany(
         { _id: { $in: [folderIdAsObjectId, ...subtree] } },
         { deletedAt: new Date() },
       ),
-      File.updateMany(
+      FileModel.updateMany(
         { parentFolderId: { $in: [folderIdAsObjectId, ...subtree] } },
         { deletedAt: new Date() },
       ),
@@ -152,10 +152,10 @@ const trashItem = async ({ userId, fileId, folderId }: trashItemArgument) => {
 
 const getTrashedItems = async ({ userId }: { userId: string }) => {
   const [trashedFiles, trashedFolders] = await Promise.all([
-    File.find({ userId, deletedAt: { $ne: null } })
+    FileModel.find({ userId, deletedAt: { $ne: null } })
       .select("_id name extension size mimeType parentFolderId")
       .lean(),
-    Folder.find({ userId, deletedAt: { $ne: null } })
+    FolderModel.find({ userId, deletedAt: { $ne: null } })
       .select("_id name size parentFolderId")
       .lean(),
   ]);
@@ -179,7 +179,7 @@ const restoreItem = async ({
     throw new ApiError(400, "FolderId aur FileId is required");
 
   if (fileId) {
-    const file = await File.findFileByOwner(userId, fileId);
+    const file = await FileModel.findFileByOwner(userId, fileId);
 
     if (!file) {
       throw new ApiError(404, "File not found");
@@ -189,7 +189,7 @@ const restoreItem = async ({
       throw new ApiError(400, "File is not in Trash");
     }
 
-    const duplicate = await File.exists({
+    const duplicate = await FileModel.exists({
       _id: { $ne: file._id as Types.ObjectId },
       userId: file.userId,
       parentFolderId: file.parentFolderId,
@@ -205,7 +205,7 @@ const restoreItem = async ({
       );
     }
 
-    await File.updateOne(
+    await FileModel.updateOne(
       { _id: file._id as Types.ObjectId },
       { deletedAt: null },
     );
@@ -213,7 +213,7 @@ const restoreItem = async ({
   }
 
   if (folderId) {
-    const folder = await Folder.findFolderByOwner(userId, folderId);
+    const folder = await FolderModel.findFolderByOwner(userId, folderId);
 
     if (!folder) {
       throw new ApiError(404, "Folder not found");
@@ -223,7 +223,7 @@ const restoreItem = async ({
       throw new ApiError(400, "Folder is not in Trash");
     }
 
-    const duplicate = await Folder.exists({
+    const duplicate = await FolderModel.exists({
       _id: { $ne: folder._id as Types.ObjectId },
       userId: folder.userId,
       parentFolderId: folder.parentFolderId,
@@ -247,11 +247,11 @@ const restoreItem = async ({
     );
 
     await Promise.all([
-      Folder.updateMany(
+      FolderModel.updateMany(
         { _id: { $in: [folderIdAsObjectId, ...subtree] } },
         { deletedAt: null },
       ),
-      File.updateMany(
+      FileModel.updateMany(
         { parentFolderId: { $in: [folderIdAsObjectId, ...subtree] } },
         { deletedAt: null },
       ),
@@ -275,7 +275,7 @@ const trashItems = async ({
   let foldersTrashed = 0;
 
   if (fileIds.length > 0) {
-    const result = await File.updateMany(
+    const result = await FileModel.updateMany(
       { _id: { $in: fileIds }, userId, deletedAt: null },
       { $set: { deletedAt: now } },
     );
@@ -283,7 +283,7 @@ const trashItems = async ({
   }
 
   if (folderIds.length > 0) {
-    const activeRoots = await Folder.find({
+    const activeRoots = await FolderModel.find({
       _id: { $in: folderIds },
       userId,
       deletedAt: null,
@@ -299,12 +299,12 @@ const trashItems = async ({
       });
       const allIds = [...rootIds, ...subtree];
 
-      const folderResult = await Folder.updateMany(
+      const folderResult = await FolderModel.updateMany(
         { _id: { $in: allIds }, userId, deletedAt: null },
         { $set: { deletedAt: now } },
       );
 
-      await File.updateMany(
+      await FileModel.updateMany(
         { parentFolderId: { $in: allIds }, userId, deletedAt: null },
         { $set: { deletedAt: now } },
       );
@@ -330,11 +330,11 @@ const restoreItems = async ({
   let foldersRestored = 0;
 
   for (const fileId of fileIds) {
-    const file = await File.findFileByOwner(userId, fileId);
+    const file = await FileModel.findFileByOwner(userId, fileId);
 
     if (!file || !file.deletedAt) continue;
 
-    const duplicate = await File.exists({
+    const duplicate = await FileModel.exists({
       _id: { $ne: file._id as Types.ObjectId },
       userId: file.userId,
       parentFolderId: file.parentFolderId,
@@ -345,7 +345,7 @@ const restoreItems = async ({
 
     if (duplicate) continue;
 
-    await File.updateOne(
+    await FileModel.updateOne(
       { _id: file._id as Types.ObjectId },
       { deletedAt: null },
     );
@@ -353,11 +353,11 @@ const restoreItems = async ({
   }
 
   for (const folderId of folderIds) {
-    const folder = await Folder.findFolderByOwner(userId, folderId);
+    const folder = await FolderModel.findFolderByOwner(userId, folderId);
 
     if (!folder || !folder.deletedAt) continue;
 
-    const duplicate = await Folder.exists({
+    const duplicate = await FolderModel.exists({
       _id: { $ne: folder._id as Types.ObjectId },
       userId: folder.userId,
       parentFolderId: folder.parentFolderId,
@@ -376,11 +376,11 @@ const restoreItems = async ({
     const allIds = [folderIdAsObjectId, ...subtree];
 
     await Promise.all([
-      Folder.updateMany(
+      FolderModel.updateMany(
         { _id: { $in: allIds }, userId },
         { deletedAt: null },
       ),
-      File.updateMany(
+      FileModel.updateMany(
         { parentFolderId: { $in: allIds }, userId },
         { deletedAt: null },
       ),
@@ -409,7 +409,7 @@ const permanentDeleteItems = async ({
   const requestedIds = itemIds.map((id) => new Types.ObjectId(id));
 
   // Trashed files requested directly.
-  const directFiles = await File.find({
+  const directFiles = await FileModel.find({
     _id: { $in: requestedIds },
     userId,
     deletedAt: { $ne: null },
@@ -418,7 +418,7 @@ const permanentDeleteItems = async ({
     .lean();
 
   // Trashed folders requested directly.
-  const trashedRoots = await Folder.find({
+  const trashedRoots = await FolderModel.find({
     _id: { $in: requestedIds },
     userId,
     deletedAt: { $ne: null },
@@ -433,7 +433,7 @@ const permanentDeleteItems = async ({
   const folderIds = [...rootIds, ...subtreeIds];
 
   // Files living inside the trashed folder subtrees (soft-deleted by cascade).
-  const subtreeFiles = await File.find({
+  const subtreeFiles = await FileModel.find({
     parentFolderId: { $in: folderIds },
     userId,
     deletedAt: { $ne: null },
@@ -470,12 +470,12 @@ const permanentDeleteItems = async ({
     }
 
     await Promise.all([
-      File.deleteMany({ _id: { $in: files.map((file) => file.id) }, userId }),
-      User.updateOne(
+      FileModel.deleteMany({ _id: { $in: files.map((file) => file.id) }, userId }),
+      UserModel.updateOne(
         { _id: userId },
         { $inc: { storageUsed: -files.reduce((sum, file) => sum + file.size, 0) } },
       ),
-      Folder.bulkWrite(
+      FolderModel.bulkWrite(
         [...sizeByParent.entries()].map(([parentFolderId, size]) => ({
           updateOne: {
             filter: { _id: parentFolderId, userId },
@@ -487,7 +487,7 @@ const permanentDeleteItems = async ({
   }
 
   if (folderIds.length > 0) {
-    await Folder.deleteMany({ _id: { $in: folderIds } });
+    await FolderModel.deleteMany({ _id: { $in: folderIds } });
   }
 
   if (filesToDelete.size > 0 || folderIds.length > 0) {
@@ -506,10 +506,10 @@ const emptyTrash = async ({
 }: {
   userId: string;
 }): Promise<{ files: number; folders: number }> => {
-  const trashedFiles = await File.find({ userId, deletedAt: { $ne: null } })
+  const trashedFiles = await FileModel.find({ userId, deletedAt: { $ne: null } })
     .select("_id size parentFolderId")
     .lean();
-  const trashedFolders = await Folder.findTrashedFolders(userId);
+  const trashedFolders = await FolderModel.findTrashedFolders(userId);
 
   for (const file of trashedFiles) {
     const fileId = file._id?.toString();
@@ -527,10 +527,10 @@ const emptyTrash = async ({
   }, 0);
 
   await Promise.all([
-    File.deleteMany({ userId, deletedAt: { $ne: null } }),
-    Folder.deleteMany({ userId, deletedAt: { $ne: null } }),
-    User.updateOne({ _id: userId }, { $inc: { storageUsed: -totalSize } }),
-    Folder.bulkWrite(
+    FileModel.deleteMany({ userId, deletedAt: { $ne: null } }),
+    FolderModel.deleteMany({ userId, deletedAt: { $ne: null } }),
+    UserModel.updateOne({ _id: userId }, { $inc: { storageUsed: -totalSize } }),
+    FolderModel.bulkWrite(
       [...sizeByParent.entries()].map(([parentFolderId, size]) => ({
         updateOne: {
           filter: { _id: parentFolderId, userId },

@@ -99,7 +99,7 @@ describe("input hardening", () => {
     const user = await User.findOne({ email: testUser.email }).lean();
 
     assert.ok(user);
-    assert.equal(user!.storageLimit, 15 * 1024 * 1024 * 1024);
+    assert.equal(user!.storageLimit, 512 * 1024 * 1024);
     assert.equal((user as unknown as Record<string, unknown>).admin, undefined);
     assert.equal((user as unknown as Record<string, unknown>).role, undefined);
   });

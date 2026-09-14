@@ -2,31 +2,50 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type {
   CompleteUploadParams,
   FileIdParams,
-  GetUploadPresignedUrlBody,
   RenameFileNameBody,
+  UploadFilePartsParams,
+  UploadRequestBody,
 } from "../schemas/file.schema.js";
 import { requireAuthUser } from "../utils/session.js";
 import {
   abortFileUpload,
   completeFileUpload,
   getFilePresignedAccess,
-  getUploadPresignedUrl,
+  getPartUploadUrls,
   renameFile,
+  uploadFiles,
 } from "../services/file.service.js";
 
+const uploadFilesHandler = async (
+  req: FastifyRequest<{ Body: UploadRequestBody }>,
+  reply: FastifyReply,
+) => {
+  const { id, storageLimit, storageUsed } = requireAuthUser(req);
 
-const getUploadPresignedUrlHandler = async (
-  req: FastifyRequest<{ Body: GetUploadPresignedUrlBody }>,
+  const data = await uploadFiles({
+    ...req.body,
+    user: {
+      id,
+      storageLimit,
+      storageUsed,
+    },
+  });
+
+  reply.success(200, "Presigned URL generated successfully", data);
+};
+
+const partUploadUrlsHandler = async (
+  req: FastifyRequest<{ Params: UploadFilePartsParams }>,
   reply: FastifyReply,
 ) => {
   const authUser = requireAuthUser(req);
 
-  const data = await getUploadPresignedUrl({
-    ...req.body,
+  const data = await getPartUploadUrls({
     userId: authUser.id,
+    uploadId: req.params.uploadId,
   });
 
-  reply.success(200, "Presigned URL generated successfully", data);
+  reply.success(200, "Part upload URLs generated successfully", data);
 };
 
 const completeFileUploadHandler = async (
@@ -92,12 +111,12 @@ const abortFileUploadHandler = async (
   reply.code(204).send();
 };
 
-
 export {
-  getUploadPresignedUrlHandler,
+  uploadFilesHandler,
   completeFileUploadHandler,
   getFilePreviewHandler,
   getFileDownloadHandler,
   renameFileHandler,
   abortFileUploadHandler,
+  partUploadUrlsHandler,
 };

@@ -21,8 +21,16 @@ export const storageNameRegex = /^(?!\.{1,2}$)(?!.*[. ]$)[^\\/:*?"<>|]+$/;
 // File Base Name Regex (no extension; extension is stored separately)
 export const fileBaseNameRegex = /^[^.]+$/;
 
-// File Extension Regex
-export const fileExtensionRegex = /^\.[a-z]+$/i;
+// File Extension Regex (.png, .zip, .mp4, ...)
+export const fileExtensionRegex = /^\.[a-z0-9]+$/i;
 
 export const mimeTypeRegex =
   /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_.+-]*$/;
+
+// Upload Limits
+export const SIMPLE_UPLOAD_MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+
+export const MB = 1024 * 1024;
+
+export const MIN_PART_SIZE = 10 * MB;
+export const MAX_PARTS = 10_000;

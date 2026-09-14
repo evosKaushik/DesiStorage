@@ -22,8 +22,8 @@ import {
 import { setSessionIdCookie, clearSessionIdCookie } from "../utils/cookies.js";
 import { ApiError } from "../utils/ApiError.js";
 import { redisClient } from "../config/redis.js";
-import User from "../models/user.model.js";
-import Session from "../models/session.model.js";
+import UserModel from "../models/user.model.js";
+import SessionModel from "../models/session.model.js";
 import { generateOTP } from "../utils/generateOTP.js";
 import { OTP_TTL_SECONDS, MAX_SESSIONS } from "../constants/constant.js";
 import {
@@ -177,7 +177,7 @@ const verifyEmailHandler = async (
     throw new ApiError(400, "Invalid OTP, Please try again");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const user = await UserModel.findByIdAndUpdate(
     userId,
     { isEmailVerified: true },
     { new: true },
@@ -205,7 +205,7 @@ const changePasswordHandler = async (
 
   const { oldPassword, newPassword } = req.body;
 
-  const user = await User.findById(authUser.id).select("+password");
+  const user = await UserModel.findById(authUser.id).select("+password");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -299,7 +299,7 @@ const logoutAllSessionsHandler = async (
   const authUser = requireAuthUser(req);
   const currentSessionId = resolveVerifiedSessionId(req);
 
-  const sessionCount = await Session.countDocuments({
+  const sessionCount = await SessionModel.countDocuments({
     userId: authUser.id,
     _id: { $ne: currentSessionId },
   });
@@ -372,7 +372,7 @@ const handleGoogleLoginHandler = async (
 
   const user = await googleAuthentication(idToken);
 
-  const sessionCount = await Session.countDocuments({ userId: user.id });
+  const sessionCount = await SessionModel.countDocuments({ userId: user.id });
 
   if (sessionCount >= MAX_SESSIONS) {
     throw new ApiError(

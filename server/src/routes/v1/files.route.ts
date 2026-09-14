@@ -5,16 +5,18 @@ import { requireVerifiedEmail } from "../../middleware/auth.middleware.js";
 import {
   completeUploadParamsSchema,
   fileIdParamsSchema,
-  getUploadPresignedUrlSchema,
+  uploadRequestSchema,
   renameFileNameSchema,
+  uploadFilePartsSchema,
 } from "../../schemas/file.schema.js";
 import {
   abortFileUploadHandler,
   completeFileUploadHandler,
   getFileDownloadHandler,
   getFilePreviewHandler,
-  getUploadPresignedUrlHandler,
+  partUploadUrlsHandler,
   renameFileHandler,
+  uploadFilesHandler,
 } from "../../controllers/file.controller.js";
 
 const fileRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -24,11 +26,24 @@ const fileRoutes: FastifyPluginAsyncZod = async (app) => {
     {
       preHandler: requireVerifiedEmail,
       schema: {
-        body: getUploadPresignedUrlSchema,
+        body: uploadRequestSchema,
       },
     },
-    getUploadPresignedUrlHandler,
+    uploadFilesHandler,
   );
+  
+  // Upload parts
+  app.post(
+    "/upload/:uploadId/parts",
+    {
+      preHandler: requireVerifiedEmail,
+      schema: {
+        params: uploadFilePartsSchema,
+      },
+    },
+    partUploadUrlsHandler,
+  );
+
   app.post(
     "/upload/:fileId/complete",
     {

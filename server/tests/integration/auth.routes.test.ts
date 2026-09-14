@@ -62,7 +62,7 @@ describe("POST /api/v1/auth/register", () => {
     assert.equal(body.data.fullName, testUser.fullName);
     assert.equal(typeof body.data.id, "string");
     assert.equal(typeof body.data.avatar, "string");
-    assert.equal(body.data.storageLimit, 15 * 1024 * 1024 * 1024);
+    assert.equal(body.data.storageLimit, 512 * 1024 * 1024);
     assert.equal(body.data.storageUsed, 0);
     assert.ok(
       !JSON.stringify(body).toLowerCase().includes("password"),
@@ -203,6 +203,7 @@ describe("GET /api/v1/auth/ (me)", () => {
         "storageUsed",
         "isEmailVerified",
         "authProviders",
+        "rootFolderId",
       ].sort(),
     );
 
@@ -402,7 +403,7 @@ describe("change-password", () => {
     });
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.json().message, "Validation failed");
+    assert.equal(res.json().message, "Validation failed: newPassword");
     assert.ok(
       Array.isArray(res.json().errors),
       "blocked by the same-password refine in changePasswordSchema",

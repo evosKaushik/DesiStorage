@@ -1,9 +1,9 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import User from "../models/user.model.js";
+import UserModel from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { redisGetJson, redisSetJson } from "../utils/redis.js";
 import type { AuthUser } from "../types/fastify.js";
-import Session from "../models/session.model.js";
+import SessionModel from "../models/session.model.js";
 import { redisClient } from "../config/redis.js";
 import {
   ONE_HOUR,
@@ -53,7 +53,7 @@ const updateSessionActivity = async (sessionId: string): Promise<void> => {
   );
 
   if (needsDbWrite) {
-    await Session.updateOne(
+    await SessionModel.updateOne(
       { _id: sessionId },
       { lastActiveAt: new Date(now) },
     );
@@ -72,7 +72,7 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
   if (cachedUserIdSession) {
     userId = cachedUserIdSession;
   } else {
-    const session = await Session.findById(sessionId).select("userId -_id");
+    const session = await SessionModel.findById(sessionId).select("userId -_id");
 
     if (!session) {
       reply.clearCookie("sid", { path: "/" });
@@ -94,7 +94,7 @@ const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
     return;
   }
 
-  const user = await User.findById(userId)
+  const user = await UserModel.findById(userId)
     .select("email fullName avatar storageLimit storageUsed isEmailVerified authProviders rootFolderId")
     .lean();
 

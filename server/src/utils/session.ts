@@ -1,7 +1,7 @@
 import type { FastifyRequest } from "fastify";
 import { isValidObjectId } from "mongoose";
 import mongoose from "mongoose";
-import Session, { type ISession } from "../models/session.model.js";
+import SessionModel, { type ISession } from "../models/session.model.js";
 import { ApiError } from "./ApiError.js";
 import { redisClient } from "../config/redis.js";
 import {
@@ -26,7 +26,7 @@ export type LeanSession = ISession & { _id: ObjectId };
 export const createSessionForUser = async (
   sessionFields: Omit<ISession, "lastActiveAt" | "createdAt">,
 ): Promise<{ _id: { toString(): string } }> => {
-  return Session.create({ ...sessionFields });
+  return SessionModel.create({ ...sessionFields });
 };
 
 export const resolveVerifiedSessionId = (req: FastifyRequest): string => {
@@ -64,7 +64,7 @@ export const resolveOptionalSessionId = (req: FastifyRequest): string | null => 
 export const getSessionsByUserId = async (
   userId: ObjectId | string,
 ): Promise<LeanSession[]> => {
-  return Session.find({ userId }).sort({ lastActiveAt: -1 }).select("-createdAt -updatedAt -__v -userId").lean();
+  return SessionModel.find({ userId }).sort({ lastActiveAt: -1 }).select("-createdAt -updatedAt -__v -userId").lean();
 };
 
 export const clearSessionCacheKeys = async (
@@ -87,7 +87,7 @@ export const revokeSessionById = async (
   sessionId: string,
   userId?: string,
 ): Promise<void> => {
-  await Session.findByIdAndDelete(sessionId);
+  await SessionModel.findByIdAndDelete(sessionId);
 
   await clearSessionCacheKeys(sessionId, userId);
 };
@@ -96,7 +96,7 @@ export const revokeSessionByOwner = async (
   sessionId: string,
   userId: ObjectId | string,
 ): Promise<void> => {
-  const session = await Session.findById(sessionId).select("_id userId").lean();
+  const session = await SessionModel.findById(sessionId).select("_id userId").lean();
 
   if (!session) {
     throw new ApiError(404, "Session not found");
@@ -106,7 +106,7 @@ export const revokeSessionByOwner = async (
     throw new ApiError(403, "You can only revoke your own sessions");
   }
 
-  await Session.findByIdAndDelete(sessionId);
+  await SessionModel.findByIdAndDelete(sessionId);
 
   await clearSessionCacheKeys(sessionId, userId.toString());
 };
@@ -115,7 +115,7 @@ export const revokeAllOtherSessions = async (
   userId: ObjectId | string,
   currentSessionId?: string,
 ): Promise<void> => {
-  const sessions = await Session.find({
+  const sessions = await SessionModel.find({
     userId,
     ...(currentSessionId ? { _id: { $ne: currentSessionId } } : {}),
   })
@@ -126,7 +126,7 @@ export const revokeAllOtherSessions = async (
     return;
   }
 
-  await Session.deleteMany({
+  await SessionModel.deleteMany({
     _id: { $in: sessions.map((session) => session._id) },
   });
 

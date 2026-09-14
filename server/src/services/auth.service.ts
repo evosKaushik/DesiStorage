@@ -1,11 +1,11 @@
-import User from "../models/user.model.js";
+import UserModel from "../models/user.model.js";
 import type {
   RegisterUserBody,
   LoginUserBody,
 } from "../schemas/auth.schema.js";
 import { ApiError } from "../utils/ApiError.js";
 import { sendEmail } from "../utils/email.js";
-import Session from "../models/session.model.js";
+import SessionModel from "../models/session.model.js";
 import { isValidObjectId, Types } from "mongoose";
 import {
   DEFAULT_AVATAR,
@@ -26,12 +26,12 @@ import {
   passwordResetRedisKey,
 } from "../utils/cacheKeys.js";
 import { verifyIdToken } from "../utils/googleAuth.js";
-import Folder from "../models/folder.model.js";
+import FolderModel from "../models/folder.model.js";
 
 const PASSWORD_RESET_COOLDOWN_TTL_SECONDS = RESET_PASSWORD_TTL_SECONDS;
 
 const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
-  const existingUser = await User.findOne({ email });
+  const existingUser = await UserModel.findOne({ email });
 
   if (existingUser) {
     throw new ApiError(409, "Email already exists");
@@ -40,7 +40,7 @@ const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
   const rootDirId = new Types.ObjectId();
   const userId = new Types.ObjectId();
 
-  await Folder.create({
+  await FolderModel.create({
     _id: rootDirId,
     name: `root-${email}`,
     parentFolderId: null,
@@ -49,7 +49,7 @@ const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
   });
 
   try {
-    const newUser = await User.create({
+    const newUser = await UserModel.create({
       _id: userId,
       fullName,
       email,
@@ -60,13 +60,13 @@ const createUser = async ({ fullName, email, password }: RegisterUserBody) => {
 
     return newUser;
   } catch (error) {
-    await Folder.deleteOne({ _id: rootDirId });
+    await FolderModel.deleteOne({ _id: rootDirId });
     throw error;
   }
 };
 
 const loginUser = async ({ email, password }: LoginUserBody) => {
-  const user = await User.findOne({ email }).select("+password");
+  const user = await UserModel.findOne({ email }).select("+password");
 
   if (!user) {
     throw new ApiError(401, "Invalid email or password");
@@ -78,7 +78,7 @@ const loginUser = async ({ email, password }: LoginUserBody) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
-  const sessionCount = await Session.countDocuments({ userId: user._id });
+  const sessionCount = await SessionModel.countDocuments({ userId: user._id });
 
   if (sessionCount >= MAX_SESSIONS) {
     throw new ApiError(
@@ -100,7 +100,7 @@ const loginUser = async ({ email, password }: LoginUserBody) => {
 };
 
 const getUserDetails = async (userId: string) => {
-  const user = await User.findById(userId).select("-__v").lean();
+  const user = await UserModel.findById(userId).select("-__v").lean();
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -219,7 +219,7 @@ Didn't request this sign-in? You can safely ignore this email.
 };
 
 const forgotPassword = async (email: string) => {
-  const user = await User.findOne({ email }).select("_id fullName").lean();
+  const user = await UserModel.findOne({ email }).select("_id fullName").lean();
 
   if (!user) {
     return;
@@ -480,7 +480,7 @@ const verifyResetPasswordToken = async (token: string): Promise<void> => {
 const resetPassword = async (token: string, newPassword: string) => {
   const { userId } = await resolveResetToken(token, true);
 
-  const user = await User.findById(userId).select("+password");
+  const user = await UserModel.findById(userId).select("+password");
 
   if (!user) {
     throw new ApiError(400, "Invalid or expired password reset link.");
@@ -557,10 +557,10 @@ const googleAuthentication = async (idToken: string) => {
 
   const fullName = sanitizeGoogleName(name, email);
 
-  let user = await User.findOne().or([{ googleId: sub }, { email }]);
+  let user = await UserModel.findOne().or([{ googleId: sub }, { email }]);
 
   if (!user) {
-    user = await User.create({
+    user = await UserModel.create({
       fullName,
       email,
       googleId: sub,

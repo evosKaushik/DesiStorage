@@ -90,7 +90,11 @@ describe("POST /api/v1/auth/google", () => {
     const res = await googleLogin();
 
     assert.equal(res.statusCode, 200);
-    assert.equal(res.json().data.isEmailVerified, false, "local verification flag is preserved");
+    assert.equal(
+      res.json().data.isEmailVerified,
+      true,
+      "Google-verified email auto-verifies the merged account",
+    );
 
     const user = await User.findOne({ email: googlePayload.email });
 

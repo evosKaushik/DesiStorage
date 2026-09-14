@@ -21,9 +21,14 @@ export const registerPayload = (overrides: Partial<typeof testUser> = {}) => ({
   ...overrides,
 });
 
-export const loginPayload = (overrides: Partial<typeof testUser> = {}) => ({
+export const loginPayload = (
+  overrides: Partial<
+    Pick<typeof testUser, "email" | "password"> & { isRememberMe: boolean }
+  > = {},
+) => ({
   email: testUser.email,
   password: testUser.password,
+  isRememberMe: true,
   ...overrides,
 });
 

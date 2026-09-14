@@ -1,9 +1,11 @@
 import {
+  CreateMultipartUploadCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -41,10 +43,7 @@ export const getFileStorageKey = (fileId: string): string => {
   return `files/${fileId}`;
 };
 
-const toApiError = (
-  error: unknown,
-  fallback: string,
-): ApiError => {
+const toApiError = (error: unknown, fallback: string): ApiError => {
   if (error instanceof ApiError) {
     return error;
   }
@@ -53,23 +52,14 @@ const toApiError = (
     switch (error.name) {
       case "NotFound":
       case "NoSuchKey":
-        return new ApiError(
-          404,
-          "File not found in storage",
-        );
+        return new ApiError(404, "File not found in storage");
 
       case "Forbidden":
       case "AccessDenied":
-        return new ApiError(
-          502,
-          "Storage access denied",
-        );
+        return new ApiError(502, "Storage access denied");
 
       case "NoSuchBucket":
-        return new ApiError(
-          502,
-          "Storage bucket not found",
-        );
+        return new ApiError(502, "Storage bucket not found");
     }
   }
 
@@ -93,11 +83,48 @@ export const generatePresignedUploadUrl = async (
       expiresIn: PRESIGN_EXPIRES_SECONDS,
     });
   } catch (error) {
-    throw toApiError(
-      error,
-      "Storage failed to generate an upload link",
-    );
+    throw toApiError(error, "Storage failed to generate an upload link");
   }
+};
+
+export const generatePresignedPartUploadUrl = async (
+  fileId: string,
+  uploadId: string,
+  partNumber: number,
+): Promise<string> => {
+  try {
+    const key = getFileStorageKey(fileId);
+
+    const command = new UploadPartCommand({
+      Bucket: BUCKET,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+    });
+
+    return await getSignedUrl(s3Client, command, {
+      expiresIn: PRESIGN_EXPIRES_SECONDS,
+    });
+  } catch (error) {
+    throw toApiError(error, "Storage failed to generate multipart upload link");
+  }
+};
+
+export const createMultipartUpload = async (
+  fileId: string,
+  mimeType: string,
+) => {
+  const key = getFileStorageKey(fileId);
+
+  const command = new CreateMultipartUploadCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ContentType: mimeType,
+  });
+
+  const result = await s3Client.send(command);
+
+  return result;
 };
 
 export const verifyUpload = async (
@@ -118,10 +145,7 @@ export const verifyUpload = async (
     const actualSize = response.ContentLength;
 
     if (actualSize === undefined) {
-      throw new ApiError(
-        502,
-        "Unable to verify uploaded file size",
-      );
+      throw new ApiError(502, "Unable to verify uploaded file size");
     }
 
     if (actualSize !== expectedSize) {
@@ -138,10 +162,7 @@ export const verifyUpload = async (
     if (!mimeType) {
       await deleteObjectSafely(key);
 
-      throw new ApiError(
-        400,
-        "Unable to verify uploaded file type",
-      );
+      throw new ApiError(400, "Unable to verify uploaded file type");
     }
 
     if (mimeType !== expectedMimeType) {
@@ -163,16 +184,11 @@ export const verifyUpload = async (
       throw error;
     }
 
-    throw toApiError(
-      error,
-      "Storage failed to verify the uploaded file",
-    );
+    throw toApiError(error, "Storage failed to verify the uploaded file");
   }
 };
 
-export const deleteObjectSafely = async (
-  key: string,
-): Promise<void> => {
+export const deleteObjectSafely = async (key: string): Promise<void> => {
   try {
     await s3Client.send(
       new DeleteObjectCommand({
@@ -232,9 +248,6 @@ export const generatePresignedReadUrl = async (
       expiresIn: PRESIGN_EXPIRES_SECONDS,
     });
   } catch (error) {
-    throw toApiError(
-      error,
-      "Storage failed to generate a file link",
-    );
+    throw toApiError(error, "Storage failed to generate a file link");
   }
 };
