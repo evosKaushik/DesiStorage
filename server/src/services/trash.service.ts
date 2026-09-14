@@ -3,6 +3,8 @@ import Folder, { type IFolder } from "../models/folder.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import File, { type IFile } from "../models/file.model.js";
 import User from "../models/user.model.js";
+import { redisClient } from "../config/redis.js";
+import { getUserProfileCacheKey } from "../utils/cacheKeys.js";
 import { deleteFileObject } from "../utils/awsS3.js";
 
 interface trashItemArgument {
@@ -488,6 +490,10 @@ const permanentDeleteItems = async ({
     await Folder.deleteMany({ _id: { $in: folderIds } });
   }
 
+  if (filesToDelete.size > 0 || folderIds.length > 0) {
+    await redisClient.del(getUserProfileCacheKey(userId));
+  }
+
   return { files: filesToDelete.size, folders: folderIds.length };
 };
 
@@ -533,6 +539,10 @@ const emptyTrash = async ({
       })),
     ),
   ]);
+
+  if (trashedFiles.length > 0 || trashedFolders.length > 0) {
+    await redisClient.del(getUserProfileCacheKey(userId));
+  }
 
   return {
     files: trashedFiles.length,

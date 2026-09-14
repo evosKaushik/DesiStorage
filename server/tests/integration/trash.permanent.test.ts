@@ -17,6 +17,8 @@ import User from "../../src/models/user.model.js";
 import File from "../../src/models/file.model.js";
 import Folder from "../../src/models/folder.model.js";
 import Session from "../../src/models/session.model.js";
+import { redisClient } from "../../src/config/redis.js";
+import { getUserProfileCacheKey } from "../../src/utils/cacheKeys.js";
 import { createTestApp } from "../helpers/app.js";
 import {
   authedInject,
@@ -149,6 +151,11 @@ describe("DELETE /api/v1/trash/permanent?action=file", () => {
     const file = await createFile(user.id, user.rootFolderId, {
       deletedAt: new Date(),
     });
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { storageUsed: file.size } },
+    );
+    const profileKey = getUserProfileCacheKey(user.id);
 
     const sendSpy = t.mock.method(S3Client.prototype, "send", async () => ({}));
 
@@ -161,11 +168,28 @@ describe("DELETE /api/v1/trash/permanent?action=file", () => {
     assert.equal(sendSpy.mock.callCount(), 1);
 
     assert.equal(await File.countDocuments({ _id: file._id }), 0);
+    assert.equal(
+      await redisClient.get(profileKey),
+      null,
+      "cached user profile must be invalidated so a fresh storageUsed is served",
+    );
+
+    const after = await User.findById(user.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      0,
+      "storageUsed must drop by the deleted file's size",
+    );
   });
 
   it("skips items that are not in Trash", async () => {
     const user = await createVerifiedUser();
     const active = await createFile(user.id, user.rootFolderId);
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { storageUsed: active.size } },
+    );
+    const profileKey = getUserProfileCacheKey(user.id);
 
     const res = await permanentDeleteRequest(user.cookies, "file", [
       active._id.toString(),
@@ -177,6 +201,17 @@ describe("DELETE /api/v1/trash/permanent?action=file", () => {
     assert.ok(
       await File.findById(active._id).lean(),
       "active file must survive",
+    );
+
+    const after = await User.findById(user.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      active.size,
+      "an active file must not change storageUsed",
+    );
+    assert.ok(
+      await redisClient.get(profileKey),
+      "a no-op delete must not invalidate the profile cache",
     );
   });
 
@@ -252,6 +287,11 @@ describe("DELETE /api/v1/trash/permanent?action=multiple", () => {
       name: "nested",
       deletedAt: new Date(),
     });
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { storageUsed: innerFile.size + nestedFile.size } },
+    );
+    const profileKey = getUserProfileCacheKey(user.id);
 
     const sendSpy = t.mock.method(S3Client.prototype, "send", async () => ({}));
 
@@ -267,6 +307,18 @@ describe("DELETE /api/v1/trash/permanent?action=multiple", () => {
     assert.equal(await Folder.countDocuments({ _id: child._id }), 0);
     assert.equal(await File.countDocuments({ _id: innerFile._id }), 0);
     assert.equal(await File.countDocuments({ _id: nestedFile._id }), 0);
+    assert.equal(
+      await redisClient.get(profileKey),
+      null,
+      "deleting a folder subtree must invalidate the cached user profile",
+    );
+
+    const after = await User.findById(user.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      0,
+      "storageUsed must drop by every file size inside the deleted folder subtree",
+    );
   });
 
   it("leaves an active sibling folder alone", async (t) => {
@@ -300,12 +352,16 @@ describe("DELETE /api/v1/trash/permanent?action=multiple", () => {
   });
 
   it("keeps records and leaves storage intact when storage delete fails", async (
-    t,
-  ) => {
+      t,
+    ) => {
     const user = await createVerifiedUser();
     const file = await createFile(user.id, user.rootFolderId, {
       deletedAt: new Date(),
     });
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { storageUsed: file.size } },
+    );
 
     t.mock.method(S3Client.prototype, "send", async () => {
       throw new Error("s3 unavailable");
@@ -320,6 +376,13 @@ describe("DELETE /api/v1/trash/permanent?action=multiple", () => {
     const persisted = await File.findById(file._id).lean();
     assert.ok(persisted, "file record must survive a storage failure");
     assert.ok(persisted.deletedAt, "file must remain in Trash for a retry");
+
+    const after = await User.findById(user.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      file.size,
+      "storageUsed must not change when the delete fails",
+    );
   });
 });
 
@@ -336,6 +399,11 @@ describe("DELETE /api/v1/trash/permanent?action=empty", () => {
       deletedAt: new Date(),
     });
     await createFile(user.id, user.rootFolderId, { name: "active" });
+    await User.updateOne(
+      { _id: user.id },
+      { $set: { storageUsed: file.size } },
+    );
+    const profileKey = getUserProfileCacheKey(user.id);
 
     const sendSpy = t.mock.method(S3Client.prototype, "send", async () => ({}));
 
@@ -351,6 +419,18 @@ describe("DELETE /api/v1/trash/permanent?action=empty", () => {
     assert.equal(await File.countDocuments({ _id: file._id }), 0);
     assert.equal(await Folder.countDocuments({ _id: folder._id }), 0);
     assert.equal(await File.countDocuments({ name: "active" }), 1);
+    assert.equal(
+      await redisClient.get(profileKey),
+      null,
+      "emptying trash must invalidate the cached user profile",
+    );
+
+    const after = await User.findById(user.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      0,
+      "storageUsed must drop by the emptied trash's file sizes",
+    );
   });
 
   it("returns zero counts for an already empty Trash", async () => {
@@ -397,6 +477,10 @@ describe("DELETE /api/v1/trash/permanent validation", () => {
     const file = await createFile(owner.id, owner.rootFolderId, {
       deletedAt: new Date(),
     });
+    await User.updateOne(
+      { _id: intruder.id },
+      { $set: { storageUsed: 9999 } },
+    );
 
     const sendSpy = t.mock.method(S3Client.prototype, "send", async () => ({}));
 
@@ -408,5 +492,12 @@ describe("DELETE /api/v1/trash/permanent validation", () => {
     assert.equal(res.body, "");
     assert.equal(sendSpy.mock.callCount(), 0);
     assert.equal(await File.countDocuments({ _id: file._id }), 1);
+
+    const after = await User.findById(intruder.id).lean();
+    assert.equal(
+      after?.storageUsed,
+      9999,
+      "a foreign delete must not touch the caller's storageUsed",
+    );
   });
 });
